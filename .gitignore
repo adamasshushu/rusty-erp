@@ -1,0 +1,6 @@
+/target/
+*.pem
+.env
+*.db
+/tmp/
+*.apk

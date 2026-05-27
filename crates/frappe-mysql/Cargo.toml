@@ -1,0 +1,11 @@
+[package]
+name = "frappe-mysql"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frappe-core = { path = "../frappe-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+sqlx = { workspace = true }

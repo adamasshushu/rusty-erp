@@ -1,0 +1,28 @@
+[package]
+name = "rusty-erp-app"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+serde_json = { workspace = true }
+
+[dependencies]
+frappe-core = { path = "../crates/frappe-core" }
+frappe-derive = { path = "../crates/frappe-derive" }
+frappe-sqlite = { path = "../crates/frappe-sqlite" }
+frappe-postgres = { path = "../crates/frappe-postgres" }
+frappe-mysql = { path = "../crates/frappe-mysql" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+lettre = { workspace = true }
+rust_decimal = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+tower-http = { workspace = true }
+uuid = { workspace = true }
+rusqlite = "0.31"
+jsonwebtoken = { workspace = true }
+bcrypt = { workspace = true }
+sqlx = { workspace = true }
+dotenvy = { workspace = true }

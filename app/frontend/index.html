@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🦀 RustyERP v0.10.0</title>
+<style>
+/* ===== RESET & LAYOUT ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.hidden{display:none!important}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#1e293b;border-right:1px solid #334155;display:flex;flex-direction:column;z-index:50;overflow-y:auto}
+.main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+.sidebar .logo{padding:20px 16px;border-bottom:1px solid #334155}
+.sidebar .logo h2{color:#f59e0b;font-size:20px}
+.sidebar .logo span{color:#64748b;font-size:11px}
+.sidebar nav{flex:1;padding:12px 8px;overflow-y:auto}
+.sidebar .nav-group{margin-bottom:8px}
+.sidebar .nav-group-title{color:#64748b;font-size:11px;text-transform:uppercase;padding:8px 12px 4px;letter-spacing:1px}
+.sidebar .nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;cursor:pointer;color:#94a3b8;font-size:13px;transition:.15s;margin-bottom:1px}
+.sidebar .nav-item:hover{background:#334155;color:#e2e8f0}
+.sidebar .nav-item.active{background:#f59e0b;color:#fff;font-weight:600}
+.sidebar .nav-item .badge{background:#334155;color:#94a3b8;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:auto}
+.sidebar .nav-item.active .badge{background:rgba(255,255,255,.2);color:#fff}
+.sidebar .download-btn{color:#f59e0b;text-decoration:none;border:1px dashed #f59e0b33;margin-bottom:2px}
+.sidebar .download-btn:hover{background:#f59e0b11;color:#fbbf24;border-color:#f59e0b66}
+.sidebar .user{padding:16px;border-top:1px solid #334155}
+.sidebar .user .name{font-size:13px;font-weight:600}
+.sidebar .user .role{font-size:11px;color:#f59e0b}
+.sidebar .user button{margin-top:8px;width:100%;background:#334155;border:none;color:#94a3b8;padding:6px;border-radius:4px;cursor:pointer;font-size:12px}
+.sidebar .user button:hover{background:#ef4444;color:#fff}
+.main-header{background:#1e293b;padding:10px 20px;border-bottom:2px solid #f59e0b;display:flex;align-items:center;justify-content:space-between}
+.main-header h2{font-size:16px;color:#f59e0b}
+.main-header .breadcrumb{color:#64748b;font-size:12px}
+.header-search{position:relative;flex:1;max-width:400px;margin:0 20px}
+.header-search input{width:100%;padding:6px 14px;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:20px;font-size:13px;outline:none}
+.header-search input:focus{border-color:#f59e0b;box-shadow:0 0 0 2px #f59e0b22}
+.header-search input::placeholder{color:#475569}
+.search-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:4px;max-height:360px;overflow-y:auto;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.search-dropdown.show{display:block}
+.search-result-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #1e293b;transition:.15s}
+.search-result-item:hover{background:#334155}
+.search-result-item .sricon{font-size:18px;width:24px;text-align:center}
+.search-result-item .srinfo{flex:1}
+.search-result-item .srinfo .srname{font-size:13px;font-weight:600;color:#e2e8f0}
+.search-result-item .srinfo .srtype{font-size:10px;color:#64748b}
+.search-result-item .srinfo .srsub{font-size:11px;color:#94a3b8}
+.search-empty{padding:20px;text-align:center;color:#64748b;font-size:13px}
+/* notification bell */
+.notif-bell{position:relative;cursor:pointer;font-size:20px;padding:4px 8px;border-radius:8px;transition:.15s}
+.notif-bell:hover{background:#334155}
+.notif-count{position:absolute;top:0;right:2px;background:#ef4444;color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px}
+.notif-count.zero{display:none}
+.notif-panel{display:none;position:absolute;top:100%;right:0;width:340px;max-height:450px;background:#1e293b;border:1px solid #334155;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:350;overflow:hidden}
+.notif-panel.show{display:block}
+.notif-header{padding:12px 16px;font-weight:700;font-size:14px;color:#f59e0b;border-bottom:1px solid #334155}
+.notif-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1e293b;cursor:pointer;transition:.15s;font-size:13px}
+.notif-item:hover{background:#334155}
+.notif-item .ni-icon{font-size:18px}
+.notif-item .ni-info{flex:1}
+.notif-item .ni-title{color:#e2e8f0;font-weight:600}
+.notif-item .ni-sub{color:#94a3b8;font-size:11px}
+.notif-item .ni-badge{font-size:10px;padding:2px 8px;border-radius:8px}
+.notif-item .ni-badge.warn{background:#f59e0b22;color:#f59e0b}
+.notif-item .ni-badge.danger{background:#ef444422;color:#ef4444}
+.notif-item .ni-badge.info{background:#3b82f622;color:#3b82f6}
+/* notification badges */
+.nav-badge{display:inline-block;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:auto;min-width:18px;text-align:center}
+.nav-badge:empty,.nav-badge.zero{display:none}
+.main-content{flex:1;overflow-y:auto;padding:20px}
+
+/* ===== CARD & GRID ===== */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.card-title{color:#94a3b8;font-size:12px;margin-bottom:8px}
+.card-value{font-size:28px;font-weight:700;color:#e2e8f0}
+.card-value.warn{color:#f59e0b}.card-value.good{color:#22c55e}.card-value.info{color:#3b82f6}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;transition:.2s;cursor:default}
+.stat-card:hover{border-color:#f59e0b}
+.stat-card .stat-icon{font-size:28px;margin-bottom:8px}
+.stat-card .stat-label{color:#94a3b8;font-size:12px;margin-bottom:4px}
+.stat-card .stat-value{font-size:24px;font-weight:700;color:#e2e8f0}
+.stat-card .stat-sub{font-size:11px;color:#64748b;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:20px}
+.chart-box{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.chart-box h3{color:#f59e0b;font-size:14px;margin-bottom:12px}
+
+/* ===== TABLE ===== */
+.table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:8px;overflow:hidden}
+.table th{background:#334155;text-align:left;padding:10px 14px;color:#f59e0b;font-weight:600;font-size:12px}
+.table td{padding:8px 14px;border-top:1px solid #1e293b;font-size:13px}
+.table tr:hover{background:#1e3a5f}
+.table .amount{text-align:right;font-family:'JetBrains Mono','Consolas',monospace}
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 0}
+.pagination button{background:#334155;border:none;color:#e2e8f0;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+.pagination button:hover{background:#f59e0b;color:#fff}
+.pagination button:disabled{opacity:.4;cursor:not-allowed}
+.pagination span{color:#94a3b8;font-size:13px}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-0,.badge-draft{background:#334155;color:#94a3b8}
+.badge-1,.badge-submitted{background:#1e40af;color:#93c5fd}
+.badge-2,.badge-cancelled{background:#991b1b;color:#fca5a5}
+.badge-pending{background:#92400e;color:#fcd34d}
+.badge-approved{background:#166534;color:#86efac}
+.badge-rejected{background:#991b1b;color:#fca5a5}
+
+/* ===== BUTTONS & TOOLBAR ===== */
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.toolbar-spacer{flex:1}
+.search-box{background:#0f172a;border:1px solid #475569;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:13px;width:200px}
+.search-box:focus{border-color:#f59e0b;outline:none}
+.toolbar select{background:#334155;border:1px solid #475569;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:13px;cursor:pointer}
+.btn{padding:7px 14px;border-radius:6px;border:none;font-size:13px;cursor:pointer;font-weight:600;transition:.15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:#f59e0b;color:#fff}
+.btn-secondary{background:#334155;color:#e2e8f0}
+.btn-success{background:#166534;color:#86efac}
+.btn-danger{background:#991b1b;color:#fca5a5}
+.btn-info{background:#1e40af;color:#93c5fd}
+.btn-warn{background:#92400e;color:#fcd34d}
+.btn-ghost{background:transparent;color:#94a3b8;border:1px solid #334155}
+.btn-sm{padding:3px 10px;font-size:11px;border-radius:4px}
+
+/* ===== FORMS ===== */
+.form-row{margin-bottom:12px}
+.form-row label{display:block;margin-bottom:3px;color:#94a3b8;font-size:11px;font-weight:600}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:5px;font-size:13px}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#f59e0b;outline:none}
+.form-row textarea{min-height:60px;resize:vertical}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #334155}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ===== MODAL ===== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:200}
+.modal.show{display:flex}
+.modal-box{background:#1e293b;border:1px solid #334155;border-radius:12px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-box h3{color:#f59e0b;margin-bottom:16px;font-size:18px}
+.modal-wide{width:780px}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;top:20px;right:20px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:12px 20px;border-radius:8px;z-index:300;font-size:13px;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateX(120%);transition:transform .3s;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(0)}
+.toast-success{border-color:#166534;color:#86efac}
+.toast-error{border-color:#991b1b;color:#fca5a5}
+.toast-warn{border-color:#92400e;color:#fcd34d}
+.toast-info{border-color:#1e40af;color:#93c5fd}
+
+/* ===== CONFIRM ===== */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:250;display:none;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:400px;text-align:center}
+.confirm-box p{color:#e2e8f0;margin-bottom:16px;font-size:14px}
+.confirm-box .btns{display:flex;gap:10px;justify-content:center}
+
+/* ===== LOGIN ===== */
+#login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a}
+.login-card{background:#1e293b;padding:40px;border-radius:12px;border:1px solid #334155;width:380px;max-width:90vw}
+.login-card h1{color:#f59e0b;text-align:center;margin-bottom:4px}
+.login-card .sub{color:#64748b;text-align:center;font-size:13px;margin-bottom:24px}
+.login-card .field{margin-bottom:14px}
+.login-card label{display:block;margin-bottom:4px;color:#94a3b8;font-size:12px}
+.login-card input{width:100%;padding:10px 14px;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:6px;font-size:15px}
+.login-card input:focus{border-color:#f59e0b;outline:none}
+.login-card button{width:100%;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.login-card button:hover{opacity:.9}
+.login-card .err{color:#fca5a5;text-align:center;margin-top:10px;font-size:13px}
+.login-card .tabs{display:flex;margin-bottom:20px;background:#0f172a;border-radius:8px;overflow:hidden}
+.login-card .tab{flex:1;text-align:center;padding:8px;cursor:pointer;color:#64748b;font-size:13px}
+.login-card .tab.active{background:#f59e0b;color:#fff}
+#register-form{display:none}
+#register-form.show{display:block}
+#app{display:none;min-height:100vh}
+#app.show{display:flex}
+
+/* ===== EMPTY STATE & SKELETON ===== */
+.empty-state{text-align:center;padding:60px 20px;color:#64748b}
+.empty-state .icon{font-size:48px;margin-bottom:16px}
+.empty-state p{font-size:14px;margin-bottom:8px}
+.skeleton{height:16px;background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;margin-bottom:8px}
+.skeleton-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-bottom:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ===== QUICK LINKS ===== */
+.quick-links-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.quick-link{display:flex;align-items:center;gap:8px;padding:12px;background:#0f172a;border-radius:8px;cursor:pointer;transition:.15s;color:#94a3b8}
+.quick-link:hover{background:#334155;color:#e2e8f0}
+.quick-link .icon{font-size:20px}
+.quick-link .text{font-size:13px;font-weight:600}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .sidebar{width:180px}.main{margin-left:180px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-row{grid-template-columns:1fr}
+  .quick-links-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .sidebar{display:none}.main{margin-left:0}
+  .sidebar.mobile-open{display:flex;position:fixed;z-index:500;width:100%;height:100vh}
+  .stats-grid{grid-template-columns:1fr}
+  .quick-links-grid{grid-template-columns:1fr}
+  .main-header{flex-wrap:wrap;padding:8px 12px;gap:6px}
+  .main-header h2{font-size:14px}
+  .header-search{max-width:100%;margin:4px 0}
+  .breadcrumb{display:none}
+  .notif-panel{width:280px;right:-10px}
+  .modal-box{width:95vw!important;max-height:85vh;padding:16px}
+  table,.data-table table{display:block;overflow-x:auto;white-space:nowrap}
+  .toolbar{flex-wrap:wrap;gap:6px}
+  .toolbar .search-box{width:100%}
+  .form-grid{grid-template-columns:1fr!important}
+  .grid-2,.grid-3{grid-template-columns:1fr!important}
+  .hamburger{display:flex!important}
+}
+.hamburger{display:none;position:fixed;top:10px;left:10px;z-index:600;background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hamburger:active{opacity:.8}
+
+/* ===== CHILD TABLE ===== */
+.child-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+.child-table th{background:#0f172a;color:#94a3b8;padding:5px 8px;font-size:11px}
+.child-table td{padding:4px 8px;border-bottom:1px solid #1e293b}
+.child-table input{width:100%;padding:4px 6px;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;font-size:12px}
+
+/* ===== DETAIL PANEL ===== */
+.detail-section{margin-bottom:16px}
+.detail-section h4{color:#f59e0b;font-size:13px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #334155}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.detail-item label{color:#64748b;font-size:11px;display:block}
+.detail-item span{color:#e2e8f0;font-size:13px}
+/* Scan page */
+.scan-area{padding:20px;background:#1e293b;border-radius:12px;margin:12px 0}
+.scan-input-area{padding:16px;background:#0f172a;border-radius:8px;text-align:center}
+.scan-entry{padding:8px 12px;margin:4px 0;border-radius:6px;display:flex;align-items:center;gap:8px;font-size:13px}
+.scan-found{background:#064e3b22;border-left:3px solid #10b981}
+.scan-extra{background:#7c2d1222;border-left:3px solid #f59e0b}
+.scan-icon{font-size:16px}
+.scan-tag{padding:2px 6px;border-radius:4px;font-size:11px;background:#334155;color:#94a3b8;margin-left:auto}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ═══ LOGIN PAGE ═══ -->
+<div id="login-page">
+ <div class="login-card">
+  <h1>🦀 RustyERP</h1>
+  <p class="sub">企业资源管理系统 v0.7.0</p>
+  <div class="tabs">
+   <div class="tab active" id="tab-login" onclick="switchAuthTab('login')">🔑 登录</div>
+   <div class="tab" id="tab-register" onclick="switchAuthTab('register')">📝 注册</div>
+  </div>
+  <form id="login-form" onsubmit="doLogin(event)">
+   <div class="field"><label>用户名</label><input id="l-user" required autocomplete="username"></div>
+   <div class="field"><label>密码</label><input id="l-pass" type="password" required autocomplete="current-password"></div>
+   <button type="submit">登 录</button>
+   <div class="err" id="l-err"></div>
+  </form>
+  <form id="register-form" onsubmit="doRegister(event)">
+   <div class="field"><label>用户名</label><input id="r-user" required></div>
+   <div class="field"><label>邮箱</label><input id="r-email" type="email"></div>
+   <div class="field"><label>密码 (6位以上)</label><input id="r-pass" type="password" required minlength="6"></div>
+   <div class="field"><label>角色</label><select id="r-role" style="width:100%;padding:10px;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:6px;font-size:15px"><option value="User">普通用户</option><option value="Auditor">审计员（只读）</option></select></div>
+   <button type="submit">注 册</button>
+   <div class="err" id="r-err"></div>
+  </form>
+ </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+ <!-- SIDEBAR -->
+ <div class="sidebar">
+  <div class="logo"><h2>🦀 RustyERP</h2><span>企业资源管理系统</span></div>
+  <nav>
+   <div class="nav-group">
+    <div class="nav-group-title">主页</div>
+    <div class="nav-item active" onclick="switchPage('dashboard')" data-page="dashboard">🏠 首页仪表盘</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">业务</div>
+    <div class="nav-item" onclick="switchPage('sales')" data-page="sales">📄 销售发票</div>
+    <div class="nav-item" onclick="switchPage('purchase')" data-page="purchase">📦 采购发票</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">CRM</div>
+    <div class="nav-item" onclick="switchPage('crm-customers')" data-page="crm-customers">🏢 客户管理</div>
+    <div class="nav-item" onclick="switchPage('crm-leads')" data-page="crm-leads">🎯 潜在客户</div>
+    <div class="nav-item" onclick="switchPage('crm-opportunities')" data-page="crm-opportunities">💼 商机管理</div>
+    <div class="nav-item" onclick="switchPage('crm-pipeline')" data-page="crm-pipeline">📊 销售管道</div>
+    <div class="nav-item" onclick="switchPage('crm-contacts')" data-page="crm-contacts">👤 联系人</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">固定资产</div>
+    <div class="nav-item" onclick="switchPage('asset-ledger')" data-page="asset-ledger">📋 资产台账</div>
+    <div class="nav-item" onclick="switchPage('asset-dashboard')" data-page="asset-dashboard">📊 折旧看板</div>
+    <div class="nav-item" onclick="switchPage('asset-requisition')" data-page="asset-requisition">📋 资产领用</div>
+    <div class="nav-item" onclick="switchPage('asset-scan')" data-page="asset-scan">📱 扫码盘点</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">财务管理</div>
+    <div class="nav-item" onclick="switchPage('accounts')" data-page="accounts">📚 会计科目</div>
+    <div class="nav-item" onclick="switchPage('journal')" data-page="journal">📒 日记账</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">财务报表</div>
+    <div class="nav-item" onclick="switchPage('trial-balance')" data-page="trial-balance">📊 试算平衡</div>
+    <div class="nav-item" onclick="switchPage('income-stmt')" data-page="income-stmt">📈 损益表</div>
+    <div class="nav-item" onclick="switchPage('balance-sheet')" data-page="balance-sheet">🏦 资产负债表</div>
+    <div class="nav-item" onclick="switchPage('cash-flow')" data-page="cash-flow">💵 现金流量表</div>
+    <div class="nav-item" onclick="switchPage('aging')" data-page="aging">📊 账龄分析</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">库存</div>
+    <div class="nav-item" onclick="switchPage('inventory')" data-page="inventory">📦 库存查询</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">生产</div>
+    <div class="nav-item" onclick="switchPage('bom')" data-page="bom">🏗️ BOM清单</div>
+    <div class="nav-item" onclick="switchPage('workorder')" data-page="workorder">🏭 生产工单</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">移动端</div>
+    <a class="nav-item download-btn" href="/downloads/rustyerp.apk" download>📱 下载 Android 客户端</a>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">人事</div>
+    <div class="nav-item" onclick="switchPage('hr-employees')" data-page="hr-employees">👥 员工管理</div>
+    <div class="nav-item" onclick="switchPage('hr-attendance')" data-page="hr-attendance">📅 考勤打卡</div>
+    <div class="nav-item" onclick="switchPage('hr-leave')" data-page="hr-leave">🏖️ 请假管理</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">采购</div>
+    <div class="nav-item" onclick="switchPage('proc-suppliers')" data-page="proc-suppliers">🏭 供应商</div>
+    <div class="nav-item" onclick="switchPage('proc-pr')" data-page="proc-pr">📋 采购申请</div>
+    <div class="nav-item" onclick="switchPage('proc-po')" data-page="proc-po">📦 采购订单</div>
+    <div class="nav-item" onclick="switchPage('proc-receipt')" data-page="proc-receipt">🚚 收货入库</div>
+   </div>
+   <div class="nav-group">
+    <div class="nav-group-title">系统</div>
+    <div class="nav-item" onclick="switchPage('users')" data-page="users">👤 用户管理</div>
+    <div class="nav-item" onclick="switchPage('audit')" data-page="audit">📋 操作审计</div>
+    <div class="nav-item" onclick="switchPage('settings')" data-page="settings">⚙️ 系统配置</div>
+   </div>
+  </nav>
+  <div class="user">
+   <div class="name" id="sidebar-user">—</div>
+   <div class="role" id="sidebar-role">—</div>
+   <button onclick="doLogout()">🚪 退出登录</button>
+  </div>
+ </div>
+
+ <!-- HAMBURGER (mobile) -->
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+
+<!-- MAIN CONTENT -->
+ <div class="main">
+  <div class="main-header">
+   <h2 id="page-title">首页仪表盘</h2>
+   <div class="header-search">
+    <input type="text" id="global-search" placeholder="🔍 全局搜索：客户、物料、订单、员工..." onkeyup="globalSearch()">
+    <div id="search-results" class="search-dropdown"></div>
+   </div>
+   <div class="notif-bell" onclick="toggleNotifPanel()">
+    🔔<span id="notif-count" class="notif-count zero">0</span>
+    <div id="notif-panel" class="notif-panel">
+     <div class="notif-header">📬 通知中心</div>
+     <div id="notif-list"><div class="search-empty">加载中...</div></div>
+    </div>
+   </div>
+   <span class="breadcrumb" id="page-breadcrumb">RustyERP</span>
+  </div>
+  <div class="main-content" id="main-content"></div>
+ </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div id="toast" class="toast"></div>
+
+<!-- ═══ CONFIRM DIALOG ═══ -->
+<div id="confirm-overlay" class="confirm-overlay">
+ <div class="confirm-box">
+  <p id="confirm-msg"></p>
+  <div class="btns">
+   <button class="btn btn-secondary" onclick="confirmResolve(false)">取消</button>
+   <button class="btn btn-danger" onclick="confirmResolve(true)" id="confirm-ok">确认</button>
+  </div>
+ </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div id="modal" class="modal">
+ <div class="modal-box modal-wide">
+  <h3 id="modal-title"></h3>
+  <div id="modal-body"></div>
+  <div class="form-actions">
+   <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+   <button class="btn btn-primary" id="modal-save-btn">保存</button>
+  </div>
+ </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   RustyERP Frontend v0.7.0 — Complete
+   ═══════════════════════════════════════════ */
+const API = '';
+const PAGE_SIZE = 15;
+let charts = { bar: null, doughnut: null };
+let _confirmResolve = null;
+
+/* ── API Helper ── */
+async function api(path, opts={}) {
+  const headers = {'Content-Type':'application/json'};
+  const token = localStorage.getItem('token');
+  if (token) headers['Authorization'] = 'Bearer '+token;
+  const res = await fetch(API+path, {...opts, headers:{...headers,...(opts.headers||{})}});
+  if (!res.ok) {
+    let msg;
+    try { const e=await res.json(); msg=e.error||e.message||res.statusText; } catch(_) { msg=res.statusText; }
+    throw new Error(msg);
+  }
+  const ct = res.headers.get('content-type')||'';
+  if (ct.includes('application/json')) return res.json();
+  return res;
+}
+
+/* ── Toast ── */
+let toastTimer;
+function toast(msg, type='info') {
+  clearTimeout(toastTimer);
+  const el = document.getElementById('toast');
+  el.className = 'toast toast-'+type;
+  el.textContent = msg;
+  el.classList.add('show');
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+/* ── Confirm Dialog ── */
+function confirmDialog(msg) {
+  return new Promise(resolve=>{
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-overlay').classList.add('show');
+    _confirmResolve = resolve;
+  });
+}
+function confirmResolveFn(val) {
+  document.getElementById('confirm-overlay').classList.remove('show');
+  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+}
+function confirmResolve(val) { confirmResolveFn(val); }
+
+/* ── Modal ── */
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function openModal(title, bodyHtml, saveHandler) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-save-btn').onclick = saveHandler;
+  document.getElementById('modal').classList.add('show');
+}
+
+/* ── Currency Formatter ── */
+function fmt(v) {
+  const n = Number(v);
+  if (isNaN(n)) return '¥0.00';
+  return n.toLocaleString('zh-CN',{style:'currency',currency:'CNY'});
+}
+function fmtNum(v) {
+  const n = Number(v);
+  if (isNaN(n)) return '0';
+  return n.toLocaleString('zh-CN');
+}
+
+/* ── Skeleton ── */
+function skeletonRows(count, cols) {
+  let h = '';
+  for (let i=0;i<count;i++) {
+    h += '<div class="skeleton-row">';
+    for (let j=0;j<cols;j++) h += '<div class="skeleton" style="width:'+(60+Math.random()*30)+'%"></div>';
+    h += '</div>';
+  }
+  return h;
+}
+
+/* ── Pagination ── */
+function pagination(page, total, pageSize, onPage) {
+  const pages = Math.max(1, Math.ceil(total/pageSize));
+  const isDocType = ['sales','purchase','accounts','journal'].includes(onPage);
+  const prevClick = isDocType ? `doctypeGoPage('${onPage}',${page-1})` : `${onPage}(${page-1})`;
+  const nextClick = isDocType ? `doctypeGoPage('${onPage}',${page+1})` : `${onPage}(${page+1})`;
+  let h = '<div class="pagination">';
+  h += '<button '+(page<=1?'disabled':'')+' onclick="'+prevClick+'">◀ 上一页</button>';
+  h += '<span>第 '+page+' 页 / 共 '+pages+' 页（'+total+' 条）</span>';
+  h += '<button '+(page>=pages?'disabled':'')+' onclick="'+nextClick+'">下一页 ▶</button>';
+  h += '</div>';
+  return h;
+}
+
+/* ── Badge ── */
+function badge(ds) {
+  if (ds === 0 || ds === '草稿') return '<span class="badge badge-0">草稿</span>';
+  if (ds === 1 || ds === '已提交') return '<span class="badge badge-1">已提交</span>';
+  if (ds === 2 || ds === '已取消') return '<span class="badge badge-2">已取消</span>';
+  if (ds === '已批准') return '<span class="badge badge-approved">已批准</span>';
+  if (ds === '已拒绝') return '<span class="badge badge-rejected">已拒绝</span>';
+  if (ds === '待审批') return '<span class="badge badge-pending">待审批</span>';
+  return '<span class="badge badge-0">'+ds+'</span>';
+}
+
+/* ── Export CSV ── */
+async function exportCSV(reportType, extraParams) {
+  try {
+    let url = API+'/api/export/'+reportType;
+    if (extraParams) url += '?'+new URLSearchParams(extraParams);
+    const token = localStorage.getItem('token');
+    const res = await fetch(url,{headers:{'Authorization':'Bearer '+token}});
+    if (!res.ok) throw new Error('导出失败');
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = reportType+'_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    toast('导出成功','success');
+  } catch(e) { toast('导出失败: '+e.message,'error'); }
+}
+
+/* ── Date Helpers ── */
+function dateFmt(s) { return s?s.slice(0,10):'-'; }
+function dtFmt(s) { return s?s.slice(0,19).replace('T',' '):'-'; }
+
+/* ══════════════════════════════════════════════════════
+   AUTH
+   ══════════════════════════════════════════════════════ */
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+  document.getElementById('login-form').style.display = tab==='login'?'block':'none';
+  document.getElementById('register-form').style.display = tab==='register'?'block':'none';
+  document.getElementById('l-err').textContent = '';
+  document.getElementById('r-err').textContent = '';
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  try {
+    const r = await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:u,password:p})});
+    localStorage.setItem('token', r.token);
+    localStorage.setItem('username', r.username);
+    localStorage.setItem('roles', JSON.stringify(r.roles||[]));
+    showApp();
+  } catch(err) {
+    document.getElementById('l-err').textContent = '❌ '+err.message;
+  }
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const u = document.getElementById('r-user').value.trim();
+  const em = document.getElementById('r-email').value.trim();
+  const p = document.getElementById('r-pass').value;
+  const role = document.getElementById('r-role').value;
+  if (p.length < 6) { document.getElementById('r-err').textContent = '❌ 密码至少6位'; return; }
+  try {
+    await api('/api/auth/register',{method:'POST',body:JSON.stringify({username:u,password:p,email:em,role})});
+    toast('注册成功，请登录','success');
+    switchAuthTab('login');
+    document.getElementById('l-user').value = u;
+  } catch(err) {
+    document.getElementById('r-err').textContent = '❌ '+err.message;
+  }
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('mobile-open');
+}
+
+function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('sidebar-user').textContent = localStorage.getItem('username');
+  const roles = JSON.parse(localStorage.getItem('roles')||'[]');
+  document.getElementById('sidebar-role').textContent = roles.join(', ')||'用户';
+  switchPage('dashboard');
+  refreshNotifications();
+  setInterval(refreshNotifications, 120000); // refresh every 2 min
+}
+
+async function doLogout() {
+  localStorage.clear();
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('l-err').textContent = '';
+}
+
+/* Notification badges */
+async function refreshNotifications() {
+  try {
+    const [sales, inv, pr, wo] = await Promise.all([
+      api('/api/resource/Sales%20Invoice?status=1&limit=200').catch(()=>({data:[]})),
+      api('/api/inventory/stock').catch(()=>({data:[]})),
+      api('/api/resource/PurchaseRequisition?status=0&limit=50').catch(()=>({data:[]})),
+      api('/api/resource/Work%20Order?limit=200').catch(()=>({data:[]})),
+    ]);
+    const pendingAppr = (sales.data||[]).filter(s=>s.approval_status==='pending').length;
+    const lowStock = (inv.data||[]).filter(i=>(i.qty_on_hand||i.qty||0)<=(i.safety_stock||i.reorder_level||10)).length;
+    const prPending = (pr.data||[]).length;
+    const woPending = (wo.data||[]).filter(w=>w.status!=='Completed'&&w.status!=='Cancelled').length;
+
+    setNavBadge('audit', pendingAppr);
+    setNavBadge('inventory', lowStock);
+    setNavBadge('proc-pr', prPending);
+    setNavBadge('workorder', woPending);
+  } catch(e) {}
+}
+function setNavBadge(page, count) {
+  const el = document.querySelector('[data-page="'+page+'"] .nav-badge');
+  if (!el) {
+    const nav = document.querySelector('[data-page="'+page+'"]');
+    if (!nav) return;
+    const badge = document.createElement('span');
+    badge.className = 'nav-badge';
+    nav.appendChild(badge);
+  }
+  const b = document.querySelector('[data-page="'+page+'"] .nav-badge');
+  if (!b) return;
+  if (count > 0) { b.textContent = count; b.classList.remove('zero'); }
+  else { b.textContent = ''; b.classList.add('zero'); }
+}
+
+async function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  if (panel.classList.contains('show')) { panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+  await loadNotifs();
+}
+async function loadNotifs() {
+  const list = document.getElementById('notif-list');
+  const count = document.getElementById('notif-count');
+  try {
+    const [sales, inv, pr, wo, audit] = await Promise.all([
+      api('/api/resource/Sales%20Invoice?status=1&limit=30').catch(()=>({data:[]})),
+      api('/api/inventory/stock').catch(()=>({data:[]})),
+      api('/api/resource/PurchaseRequisition?status=0&limit=20').catch(()=>({data:[]})),
+      api('/api/resource/Work%20Order?limit=30').catch(()=>({data:[]})),
+      api('/api/audit').catch(()=>({data:[]})),
+    ]);
+    let items = [];
+    // Pending approvals
+    (sales.data||[]).filter(s=>s.approval_status==='pending').forEach(s=>items.push({icon:'⏳',title:'待审批: '+escHtml(s.name),sub:escHtml(s.customer_name||'')+' · ¥'+(s.grand_total||0).toLocaleString(),cls:'warn',nav:'audit'}));
+    // Low stock
+    (inv.data||[]).filter(i=>(i.qty_on_hand||i.qty||i.stock_qty||0)<=(i.safety_stock||5)).forEach(i=>items.push({icon:'⚠️',title:'库存预警: '+escHtml(i.item_name||i.item_code),sub:'库存 '+(i.qty_on_hand||i.qty||i.stock_qty||0)+' / 安全 '+(i.safety_stock||5),cls:'danger',nav:'inventory'}));
+    // PR pending
+    (pr.data||[]).forEach(p=>items.push({icon:'📋',title:'采购申请: '+escHtml(p.name),sub:escHtml(p.requester||'')+' · '+(p.items||[]).length+'项',cls:'warn',nav:'proc-pr'}));
+    // Open work orders
+    (wo.data||[]).filter(w=>w.status!=='Completed'&&w.status!=='Cancelled').forEach(w=>items.push({icon:'🏭',title:'生产工单: '+escHtml(w.name),sub:escHtml(w.product||w.item_name||'')+' × '+(w.qty||0),cls:'info',nav:'workorder'}));
+    // Recent activity
+    (audit.data||[]).slice(0,5).forEach(a=>items.push({icon:'📌',title:escHtml(a.doctype)+' '+escHtml(a.name),sub:dtFmt(a.modified).slice(5,16),cls:'info',nav:'audit'}));
+
+    const total = items.length;
+    count.textContent = total;
+    if (total===0) count.classList.add('zero'); else count.classList.remove('zero');
+
+    if (items.length===0) {
+      list.innerHTML = '<div class="search-empty">🎉 暂无通知</div>';
+    } else {
+      list.innerHTML = items.map(i=>`<div class="notif-item" onclick="switchPage('${i.nav}');document.getElementById('notif-panel').classList.remove('show')"><div class="ni-icon">${i.icon}</div><div class="ni-info"><div class="ni-title">${i.title}</div><div class="ni-sub">${i.sub}</div></div><span class="ni-badge ${i.cls}">查看</span></div>`).join('');
+    }
+  } catch(e) { list.innerHTML = '<div class="search-empty">加载失败</div>'; }
+}
+// Close notif panel on outside click
+document.addEventListener('click',e=>{
+  const panel = document.getElementById('notif-panel');
+  const bell = document.querySelector('.notif-bell');
+  if (panel && bell && !bell.contains(e.target)) panel.classList.remove('show');
+});
+
+/* Check saved token */
+(async function init() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      await api('/api/auth/me');
+      showApp();
+    } catch(e) { localStorage.clear(); }
+  }
+})();
+
+/* ══════════════════════════════════════════════════════
+   NAVIGATION
+   ══════════════════════════════════════════════════════ */
+const PAGE_TITLES = {
+  'dashboard': '首页仪表盘',
+  'sales': '销售发票',
+  'purchase': '采购发票',
+  'asset-ledger': '资产台账',
+  'asset-dashboard': '折旧看板',
+  'asset-requisition': '资产领用',
+  'asset-scan': '扫码盘点',
+  'accounts': '会计科目',
+  'journal': '日记账',
+  'trial-balance': '试算平衡',
+  'income-stmt': '损益表',
+  'balance-sheet': '资产负债表',
+  'cash-flow': '现金流量表',
+  'aging': '账龄分析',
+  'inventory': '库存查询',
+  'bom': 'BOM清单',
+  'workorder': '生产工单',
+  'users': '用户管理',
+  'audit': '操作审计',
+  'settings': '系统配置',
+  'crm-customers': '客户管理',
+  'crm-leads': '潜在客户',
+  'crm-opportunities': '商机管理',
+  'crm-pipeline': '销售管道',
+  'crm-contacts': '联系人管理',
+  'hr-employees': '员工管理',
+  'hr-attendance': '考勤打卡',
+  'hr-leave': '请假管理',
+  'proc-suppliers': '供应商管理',
+  'proc-pr': '采购申请',
+  'proc-po': '采购订单',
+  'proc-receipt': '收货入库',
+};
+
+const PAGE_RENDERERS = {
+  'dashboard': renderDashboard,
+  'sales': ()=>renderDoctypePage('Sales Invoice','sales','📄'),
+  'purchase': ()=>renderDoctypePage('Purchase Invoice','purchase','📦'),
+  'asset-ledger': renderAssetLedger,
+  'asset-dashboard': renderAssetDashboard,
+  'asset-requisition': renderAssetRequisition,
+  'asset-scan': renderAssetScan,
+  'accounts': ()=>renderDoctypePage('Account','accounts','📚'),
+  'journal': ()=>renderDoctypePage('Journal Entry','journal','📒'),
+  'trial-balance': ()=>renderFinanceReport('trial-balance','试算平衡','📊'),
+  'income-stmt': ()=>renderFinanceReport('income-statement','损益表','📈'),
+  'balance-sheet': ()=>renderFinanceReport('balance-sheet','资产负债表','🏦'),
+  'cash-flow': ()=>renderFinanceReport('cash-flow','现金流量表','💵'),
+  'aging': ()=>renderFinanceReport('aging','账龄分析','📊'),
+  'inventory': renderInventory,
+  'bom': renderBOM,
+  'workorder': renderWorkOrder,
+  'users': renderUsers,
+  'audit': renderAudit,
+  'settings': renderSettings,
+  'crm-customers': ()=>renderCRMList('Customer','客户','🏢'),
+  'crm-leads': ()=>renderCRMList('Lead','潜在客户','🎯'),
+  'crm-opportunities': ()=>renderCRMList('Opportunity','商机','💼'),
+  'crm-pipeline': renderPipeline,
+  'crm-contacts': ()=>renderCRMList('Contact','联系人','👤'),
+  'hr-employees': renderHREmployees,
+  'hr-attendance': renderHRAttendance,
+  'hr-leave': renderHRLeave,
+  'proc-suppliers': ()=>renderProcurementList('Supplier','供应商','🏭'),
+  'proc-pr': ()=>renderProcurementList('PurchaseRequisition','采购申请','📋'),
+  'proc-po': renderPO,
+  'proc-receipt': ()=>renderProcurementList('GoodsReceipt','收货单','🚚'),
+};
+
+let _currentPage = 'dashboard';
+function switchPage(page) {
+  _currentPage = page;
+  // Reset charts
+  if (charts.bar) { charts.bar.destroy(); charts.bar = null; }
+  if (charts.doughnut) { charts.doughnut.destroy(); charts.doughnut = null; }
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const navEl = document.querySelector('[data-page="'+page+'"]');
+  if (navEl) navEl.classList.add('active');
+  // Update header
+  document.getElementById('page-title').textContent = PAGE_TITLES[page]||page;
+  document.getElementById('page-breadcrumb').textContent = 'RustyERP / '+(PAGE_TITLES[page]||page);
+  // Render
+  const renderer = PAGE_RENDERERS[page];
+  if (renderer) renderer();
+}
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD
+   ══════════════════════════════════════════════════════ */
+async function renderDashboard() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `
+    <div class="stats-grid" id="dash-stats">${skeletonRows(1,6)}</div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card" id="dash-todo"><div class="card-title">📋 待办事项</div><div class="skeleton-row"><div class="skeleton" style="width:80%"></div></div></div>
+      <div class="card" id="dash-activity"><div class="card-title">🕐 最近活动</div><div class="skeleton-row"><div class="skeleton" style="width:80%"></div></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><h3>📊 收入趋势（模拟演示）</h3><canvas id="chart-revenue"></canvas></div>
+      <div class="chart-box"><h3>🍩 资产构成</h3><canvas id="chart-assets"></canvas></div>
+    </div>`;
+
+  try {
+    const [assets, inv, workorders, sales, customers, suppliers, audit] = await Promise.all([
+      api('/api/asset/list?limit=1000').catch(()=>({data:[]})),
+      api('/api/inventory/stock').catch(()=>({data:[]})),
+      api('/api/resource/Work%20Order?limit=200').catch(()=>({data:[]})),
+      api('/api/resource/Sales%20Invoice?status=1&limit=200').catch(()=>({data:[]})),
+      api('/api/resource/Customer?limit=200').catch(()=>({data:[]})),
+      api('/api/resource/Supplier?limit=200').catch(()=>({data:[]})),
+      api('/api/audit').catch(()=>({data:[]})),
+    ]);
+    const assetData = assets.data||[];
+    const invData = inv.data||[];
+    const woData = workorders.data||[];
+    const custData = customers.data||[];
+    const suppData = suppliers.data||[];
+    const auditData = audit.data||[];
+    const assetValue = assetData.reduce((s,a)=>s+(a.purchase_cost||a.value||0),0);
+    const invValue = invData.reduce((s,i)=>s+((i.qty||0)*(i.unit_price||i.rate||0)),0);
+    const totalAssets = assetValue + invValue;
+    const woOpen = woData.filter(w=>w.status!=='Completed'&&w.status!=='Cancelled').length;
+    const lowStock = invData.filter(i=> (i.qty_on_hand||i.qty||0) <= (i.safety_stock||i.reorder_level||10) ).length;
+    const pendingAppr = (sales.data||[]).filter(s=>s.approval_status==='pending').length;
+    const revenue = (sales.data||[]).reduce((s,si)=>s+(si.grand_total||si.total||0),0);
+
+    // Stats row - 6 cards
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="stat-card" onclick="switchPage('asset-ledger')" style="cursor:pointer"><div class="stat-icon">📋</div><div class="stat-label">固定资产</div><div class="stat-value">${assetData.length}</div><div class="stat-sub">净值 ${fmt(assetValue)}</div></div>
+      <div class="stat-card" onclick="switchPage('inventory')" style="cursor:pointer"><div class="stat-icon">📦</div><div class="stat-label">库存价值</div><div class="stat-value">${fmt(invValue)}</div><div class="stat-sub">${invData.length} 种${lowStock>0?' · ⚠️'+lowStock+'预警':''}</div></div>
+      <div class="stat-card" onclick="switchPage('workorder')" style="cursor:pointer"><div class="stat-icon">🏭</div><div class="stat-label">生产工单</div><div class="stat-value">${woOpen}</div><div class="stat-sub">进行中 / 共${woData.length}张</div></div>
+      <div class="stat-card" onclick="switchPage('crm-customers')" style="cursor:pointer"><div class="stat-icon">🏢</div><div class="stat-label">客户 / 供应商</div><div class="stat-value">${custData.length} / ${suppData.length}</div><div class="stat-sub">总业务伙伴</div></div>
+      <div class="stat-card" onclick="switchPage('sales')" style="cursor:pointer"><div class="stat-icon">💰</div><div class="stat-label">本月销售额</div><div class="stat-value" style="color:#10b981">${fmt(revenue)}</div><div class="stat-sub">${(sales.data||[]).length} 笔已提交</div></div>
+      <div class="stat-card" onclick="switchPage('audit')" style="cursor:pointer"><div class="stat-icon">📋</div><div class="stat-label">待审批</div><div class="stat-value" style="color:${pendingAppr>0?'#f59e0b':'#22c55e'}">${pendingAppr}</div><div class="stat-sub">${pendingAppr>0?'需要处理':'全部完成 ✅'}</div></div>`;
+
+    // Draw charts
+    drawDashboardCharts(assetValue, invValue, totalAssets);
+
+    // --- Todo section ---
+    let todoHtml = '';
+    // Pending approvals
+    if (pendingAppr > 0) todoHtml += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer" onclick="switchPage('audit')"><span>⏳</span><span style="color:#f59e0b;font-weight:600">${pendingAppr} 项待审批</span><span style="color:#64748b;font-size:11px;margin-left:auto">销售发票</span></div>`;
+    // Low stock
+    if (lowStock > 0) todoHtml += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer" onclick="switchPage('inventory')"><span>⚠️</span><span style="color:#ef4444;font-weight:600">${lowStock} 项库存预警</span><span style="color:#64748b;font-size:11px;margin-left:auto">低于安全库存</span></div>`;
+    // Open work orders
+    if (woOpen > 0) todoHtml += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer" onclick="switchPage('workorder')"><span>🏭</span><span style="color:#3b82f6;font-weight:600">${woOpen} 张工单进行中</span><span style="color:#64748b;font-size:11px;margin-left:auto">生产管理</span></div>`;
+    // PR pending
+    try {
+      const pr = await api('/api/resource/PurchaseRequisition?status=0&limit=50').catch(()=>({data:[]}));
+      const prPending = (pr.data||[]).length;
+      if (prPending > 0) todoHtml += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer" onclick="switchPage('proc-pr')"><span>📋</span><span style="color:#f59e0b;font-weight:600">${prPending} 项采购申请待处理</span><span style="color:#64748b;font-size:11px;margin-left:auto">采购管理</span></div>`;
+    } catch(e) {}
+    if (!todoHtml) todoHtml = '<div style="color:#64748b;padding:8px 0;font-size:13px">🎉 暂无待办事项，一切正常！</div>';
+    document.getElementById('dash-todo').innerHTML = '<div class="card-title">📋 待办事项</div>'+todoHtml;
+
+    // --- Activity feed ---
+    let actHtml = '';
+    const recent = (auditData||[]).slice(0, 8);
+    if (recent.length > 0) {
+      recent.forEach(a=>{
+        const dtLabel = {'Sales Invoice':'销售发票','Purchase Invoice':'采购发票','Asset':'资产','Journal Entry':'日记账','Item':'物料','BOM':'BOM','Work Order':'工单'}[a.doctype]||a.doctype;
+        actHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px"><span style="color:#64748b;width:80px;flex-shrink:0">${dtFmt(a.modified).slice(5,16)}</span><span>${dtLabel} <b>${escHtml(a.name)}</b></span><span style="margin-left:auto;font-size:11px">${badge(a.docstatus)}</span></div>`;
+      });
+    } else { actHtml = '<div style="color:#64748b;padding:8px 0;font-size:13px">暂无活动记录</div>'; }
+    document.getElementById('dash-activity').innerHTML = '<div class="card-title">🕐 最近活动</div>'+actHtml;
+
+    // --- Low stock alerts (below charts if any) ---
+    if (lowStock > 0) {
+      const alertItems = invData.filter(i=> (i.qty_on_hand||i.qty||0) <= (i.safety_stock||i.reorder_level||10));
+      const alertHtml = alertItems.map(i=>`<tr><td>⚠️ ${i.item_name||i.name||'?'}</td><td>库存 ${i.qty_on_hand||i.qty||0}</td><td style="color:#ef4444">安全 ${i.safety_stock||i.reorder_level||10}</td></tr>`).join('');
+      const alertDiv = document.createElement('div');
+      alertDiv.innerHTML = `<div style="margin:20px 0"><div style="color:#f59e0b;font-weight:700;margin-bottom:8px">⚠️ 库存预警 — ${lowStock} 项低于安全库存</div><table style="width:100%"><tbody>${alertHtml}</tbody></table></div>`;
+      m.appendChild(alertDiv);
+    }
+  } catch(e) {
+    document.getElementById('dash-stats').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>数据加载失败: ${e.message}</p></div>`;
+  }
+}
+
+function drawDashboardCharts(assetNet, invValue, totalAssets) {
+  setTimeout(()=>{
+    const ctx1 = document.getElementById('chart-revenue');
+    if (ctx1 && !charts.bar) {
+      charts.bar = new Chart(ctx1,{
+        type:'bar',
+        data:{
+          labels:['1月','2月','3月','4月','5月'],
+          datasets:[
+            {label:'收入',data:[120000,135000,150000,142000,158000],backgroundColor:'#10b981',borderRadius:4},
+            {label:'费用',data:[85000,92000,98000,95000,102000],backgroundColor:'#ef4444',borderRadius:4}
+          ]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{labels:{color:'#94a3b8'}}},
+          scales:{
+            x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},
+            y:{ticks:{color:'#94a3b8',callback:v=>'¥'+v.toLocaleString()},grid:{color:'#334155'}}
+          }
+        }
+      });
+    }
+    const ctx2 = document.getElementById('chart-assets');
+    const other = Math.max(0, totalAssets - assetNet - invValue);
+    if (ctx2 && !charts.doughnut) {
+      charts.doughnut = new Chart(ctx2,{
+        type:'doughnut',
+        data:{
+          labels:['固定资产','存货','现金','其他'],
+          datasets:[{data:[assetNet,invValue,other*0.4,other*0.6],backgroundColor:['#f59e0b','#3b82f6','#10b981','#8b5cf6'],borderWidth:0}]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:16}}}
+        }
+      });
+    }
+  }, 150);
+}
+
+/* ══════════════════════════════════════════════════════
+   GENERIC DOCTYPE CRUD PAGES (Sales, Purchase, Accounts, Journal)
+   ══════════════════════════════════════════════════════ */
+const DOCTYPE_META = {
+  'sales': {doctype:'Sales Invoice', fields:[
+    {key:'customer_name',label:'客户名称',required:true},
+    {key:'posting_date',label:'过账日期',type:'date',required:true},
+    {key:'due_date',label:'到期日',type:'date'},
+    {key:'total_amount',label:'总金额',type:'number'},
+    {key:'tax_amount',label:'税额',type:'number'},
+    {key:'grand_total',label:'价税合计',type:'number'},
+    {key:'status',label:'状态',type:'select',options:['草稿','已提交','已取消']},
+    {key:'remarks',label:'备注',type:'textarea'},
+    {key:'items',label:'明细行',type:'child',childFields:[
+      {key:'item_code',label:'物料编码',width:'30%'},
+      {key:'item_name',label:'物料名称',width:'30%'},
+      {key:'qty',label:'数量',type:'number',width:'15%'},
+      {key:'rate',label:'单价',type:'number',width:'15%'},
+      {key:'amount',label:'金额',type:'number',width:'15%'},
+    ]}
+  ]},
+  'purchase': {doctype:'Purchase Invoice', fields:[
+    {key:'supplier_name',label:'供应商名称',required:true},
+    {key:'posting_date',label:'过账日期',type:'date',required:true},
+    {key:'due_date',label:'到期日',type:'date'},
+    {key:'total_amount',label:'总金额',type:'number'},
+    {key:'tax_amount',label:'税额',type:'number'},
+    {key:'grand_total',label:'价税合计',type:'number'},
+    {key:'status',label:'状态',type:'select',options:['草稿','已提交','已取消']},
+    {key:'remarks',label:'备注',type:'textarea'},
+    {key:'items',label:'明细行',type:'child',childFields:[
+      {key:'item_code',label:'物料编码',width:'30%'},
+      {key:'item_name',label:'物料名称',width:'30%'},
+      {key:'qty',label:'数量',type:'number',width:'15%'},
+      {key:'rate',label:'单价',type:'number',width:'15%'},
+      {key:'amount',label:'金额',type:'number',width:'15%'},
+    ]}
+  ]},
+  'accounts': {doctype:'Account', fields:[
+    {key:'account_name',label:'科目名称',required:true},
+    {key:'account_number',label:'科目编码'},
+    {key:'account_type',label:'类型',type:'select',options:['资产','负债','权益','收入','费用']},
+    {key:'parent_account',label:'上级科目'},
+    {key:'is_group',label:'是否分组',type:'select',options:['否','是']},
+    {key:'description',label:'描述',type:'textarea'},
+  ]},
+  'journal': {doctype:'Journal Entry', fields:[
+    {key:'posting_date',label:'过账日期',type:'date',required:true},
+    {key:'voucher_type',label:'凭证类型',type:'select',options:['记账凭证','收款凭证','付款凭证','转账凭证']},
+    {key:'total_debit',label:'借方合计',type:'number'},
+    {key:'total_credit',label:'贷方合计',type:'number'},
+    {key:'status',label:'状态',type:'select',options:['草稿','已提交','已取消']},
+    {key:'remarks',label:'备注',type:'textarea'},
+    {key:'accounts',label:'分录行',type:'child',childFields:[
+      {key:'account',label:'科目',width:'35%'},
+      {key:'debit',label:'借方',type:'number',width:'20%'},
+      {key:'credit',label:'贷方',type:'number',width:'20%'},
+      {key:'description',label:'摘要',width:'25%'},
+    ]}
+  ]},
+};
+
+let doctypeState = {};
+function getDoctypeState(page) {
+  if (!doctypeState[page]) doctypeState[page] = {page:1,search:'',total:0};
+  return doctypeState[page];
+}
+
+async function renderDoctypePage(doctype, pageKey, icon) {
+  const meta = DOCTYPE_META[pageKey];
+  const st = getDoctypeState(pageKey);
+  const m = document.getElementById('main-content');
+  const listId = pageKey+'-list';
+  m.innerHTML = `
+    <div class="toolbar">
+      <span style="font-size:18px;margin-right:8px">${icon}</span>
+      <input class="search-box" id="${pageKey}-search" placeholder="搜索..." value="${escHtml(st.search)}" onkeydown="if(event.key==='Enter')doctypeSearch('${pageKey}')">
+      <button class="btn btn-primary" onclick="doctypeSearch('${pageKey}')">🔍 搜索</button>
+      <button class="btn btn-success" onclick="openDoctypeForm('${pageKey}')">+ 新建</button>
+      <button class="btn btn-info" onclick="exportCSV('${pageKey}')">📥 导出CSV</button>
+      <div class="toolbar-spacer"></div>
+      <button class="btn btn-ghost" onclick="doctypeRefresh('${pageKey}')">🔄 刷新</button>
+    </div>
+    <div id="${listId}">${skeletonRows(8,5)}</div>`;
+
+  await loadDoctypeList(doctype, pageKey, st.page);
+}
+
+async function loadDoctypeList(doctype, pageKey, page) {
+  const st = getDoctypeState(pageKey);
+  st.page = page;
+  const listId = pageKey+'-list';
+  const offset = (page-1)*PAGE_SIZE;
+  const qs = '?limit='+PAGE_SIZE+'&offset='+offset+(st.search?'&search='+encodeURIComponent(st.search):'');
+  try {
+    const r = await api('/api/resource/'+encodeURIComponent(doctype)+qs);
+    const data = r.data||[];
+    st.total = r.total||data.length;
+    if (data.length === 0) {
+      document.getElementById(listId).innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p><button class="btn btn-primary" onclick="openDoctypeForm('${pageKey}')">+ 创建第一条</button></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr>';
+    const meta = DOCTYPE_META[pageKey];
+    if (meta) {
+      h += '<th>单据编号</th>';
+      meta.fields.slice(0,4).forEach(f=>h+='<th>'+f.label+'</th>');
+    } else {
+      h += '<th>名称</th><th>状态</th><th>更新时间</th>';
+    }
+    h += '<th style="width:160px">操作</th></tr></thead><tbody>';
+    data.forEach(d=>{
+      const name = d.name||'';
+      const ds = d.docstatus!==undefined?d.docstatus:d.status;
+      const dsNum = typeof ds==='string'?(ds==='草稿'?0:ds==='已提交'?1:ds==='已取消'?2:-1):ds;
+      h += '<tr>';
+      h += '<td><strong style="color:#f59e0b;cursor:pointer" onclick="viewDoctypeDetail(\''+pageKey+'\',\''+escHtml(name)+'\')">'+escHtml(name)+'</strong></td>';
+      if (meta) {
+        meta.fields.slice(0,4).forEach(f=>{
+          const v = d.data&&d.data[f.key]!==undefined?d.data[f.key]:(d[f.key]!==undefined?d[f.key]:'');
+          if (f.type==='number'||['total_amount','tax_amount','grand_total','total_debit','total_credit'].includes(f.key)) {
+            h += '<td class="amount">'+fmt(v)+'</td>';
+          } else if (f.key==='posting_date'||f.key==='due_date') {
+            h += '<td>'+dateFmt(v)+'</td>';
+          } else {
+            h += '<td>'+escHtml(String(v||'-'))+'</td>';
+          }
+        });
+      } else {
+        h += '<td>'+badge(dsNum>=0?dsNum:ds)+'</td>';
+        h += '<td style="font-size:11px;color:#94a3b8">'+dtFmt(d.modified||d.creation)+'</td>';
+      }
+      h += '<td>';
+      h += '<button class="btn btn-sm btn-info" onclick="openDoctypeForm(\''+pageKey+'\',\''+escHtml(name)+'\')">✏️</button> ';
+      h += '<button class="btn btn-sm btn-danger" onclick="deleteDoctypeItem(\''+pageKey+'\',\''+escHtml(name)+'\')">🗑️</button>';
+      if (dsNum===0) {
+        h += ' <button class="btn btn-sm btn-success" onclick="doctypeAction(\''+pageKey+'\',\''+escHtml(name)+'\',\'submit\')">提交</button>';
+      }
+      if (dsNum===1) {
+        h += ' <button class="btn btn-sm btn-warn" onclick="doctypeAction(\''+pageKey+'\',\''+escHtml(name)+'\',\'cancel\')">取消</button>';
+      }
+      h += '</td></tr>';
+    });
+    h += '</tbody></table>';
+    h += pagination(page, st.total, PAGE_SIZE, pageKey);
+    document.getElementById(listId).innerHTML = h;
+    // Update search box
+    const sb = document.getElementById(pageKey+'-search');
+    if (sb) sb.value = st.search;
+  } catch(e) {
+    document.getElementById(listId).innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>加载失败: ${escHtml(e.message)}</p></div>`;
+  }
+}
+
+function doctypeSearch(pageKey) {
+  const sb = document.getElementById(pageKey+'-search');
+  const st = getDoctypeState(pageKey);
+  st.search = sb?sb.value:'';
+  st.page = 1;
+  const meta = DOCTYPE_META[pageKey];
+  loadDoctypeList(meta.doctype, pageKey, 1);
+}
+function doctypeGoPage(pageKey, p) {
+    const meta = DOCTYPE_META[pageKey];
+    loadDoctypeList(meta.doctype, pageKey, p);
+  }
+function doctypeRefresh(pageKey) {
+  const st = getDoctypeState(pageKey);
+  const meta = DOCTYPE_META[pageKey];
+  loadDoctypeList(meta.doctype, pageKey, st.page);
+}
+
+function openDoctypeForm(pageKey, name) {
+  const meta = DOCTYPE_META[pageKey];
+  if (!meta) return toast('未知类型','error');
+  const isNew = !name;
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-title').textContent = isNew?'新建 '+meta.doctype:'编辑 '+meta.doctype;
+  let body = '';
+  meta.fields.forEach(f=>{
+    if (f.type==='child') {
+      body += '<div style="margin:12px 0"><strong style="color:#f59e0b;font-size:13px">'+f.label+'</strong>';
+      body += '<table class="child-table"><thead><tr>';
+      f.childFields.forEach(cf=>body+='<th style="width:'+(cf.width||'auto')+'">'+cf.label+'</th>');
+      body += '<th style="width:30px"></th></tr></thead><tbody id="child-rows-'+f.key+'"></tbody></table>';
+      body += '<button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="addChildRow(\''+f.key+'\',\''+escHtml(JSON.stringify(f.childFields))+'\')">+ 添加行</button></div>';
+    } else if (f.type==='textarea') {
+      body += '<div class="form-row"><label>'+f.label+(f.required?' <span style="color:#f87171">*</span>':'')+'</label><textarea id="field-'+f.key+'"></textarea></div>';
+    } else if (f.type==='select') {
+      body += '<div class="form-row"><label>'+f.label+(f.required?' <span style="color:#f87171">*</span>':'')+'</label><select id="field-'+f.key+'">';
+      f.options.forEach(o=>body+='<option value="'+o+'">'+o+'</option>');
+      body += '</select></div>';
+    } else {
+      body += '<div class="form-row"><label>'+f.label+(f.required?' <span style="color:#f87171">*</span>':'')+'</label><input id="field-'+f.key+'" type="'+(f.type||'text')+'"'+(!isNew&&f.key==='name'?' disabled':'')+'></div>';
+    }
+  });
+  document.getElementById('modal-body').innerHTML = '<div id="form-errors" style="color:#fca5a5;font-size:12px;margin-bottom:8px"></div>'+body;
+  document.getElementById('modal-save-btn').onclick = ()=>saveDoctypeForm(pageKey, name, meta);
+  modal.classList.add('show');
+  // Load existing data
+  if (!isNew) {
+    (async ()=>{
+      try {
+        const r = await api('/api/resource/'+encodeURIComponent(meta.doctype)+'/'+encodeURIComponent(name));
+        const d = r.data||{};
+        meta.fields.forEach(f=>{
+          if (f.type==='child') {
+            const rows = (d[f.key])||[];
+            rows.forEach(row=>addChildRow(f.key,f.childFields,row));
+          } else {
+            const el = document.getElementById('field-'+f.key);
+            if (el) el.value = d[f.key]||'';
+          }
+        });
+      } catch(e) { toast('加载数据失败: '+e.message,'error'); }
+    })();
+  }
+}
+
+function addChildRow(key, fieldsJson, data) {
+  const fields = typeof fieldsJson==='string'?JSON.parse(fieldsJson):fieldsJson;
+  const tbody = document.getElementById('child-rows-'+key);
+  if (!tbody) return;
+  const row = document.createElement('tr');
+  fields.forEach(f=>{
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    if (f.type==='number') inp.type='number';
+    if (data && data[f.key]!==undefined) inp.value = data[f.key];
+    inp.setAttribute('data-field', f.key);
+    td.appendChild(inp);
+    row.appendChild(td);
+  });
+  const delTd = document.createElement('td');
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-sm btn-danger';
+  delBtn.textContent = '✕';
+  delBtn.onclick = ()=>row.remove();
+  delTd.appendChild(delBtn);
+  row.appendChild(delTd);
+  tbody.appendChild(row);
+}
+
+async function saveDoctypeForm(pageKey, name, meta) {
+  const data = {};
+  const errors = [];
+  meta.fields.forEach(f=>{
+    if (f.type==='child') {
+      const tbody = document.getElementById('child-rows-'+f.key);
+      if (tbody) {
+        const rows = [];
+        tbody.querySelectorAll('tr').forEach(tr=>{
+          const row = {};
+          tr.querySelectorAll('input').forEach(inp=>row[inp.getAttribute('data-field')]=inp.value);
+          rows.push(row);
+        });
+        data[f.key] = rows;
+      }
+    } else {
+      const el = document.getElementById('field-'+f.key);
+      if (el) {
+        let v = el.value;
+        if (f.type==='number') v = parseFloat(v)||0;
+        if (f.required && !v) errors.push(f.label+' 为必填项');
+        data[f.key] = v;
+      }
+    }
+  });
+  if (errors.length>0) {
+    document.getElementById('form-errors').innerHTML = errors.map(e=>'❌ '+e).join('<br>');
+    return;
+  }
+  const dt = meta.doctype;
+  try {
+    if (name) {
+      await api('/api/resource/'+encodeURIComponent(dt)+'/'+encodeURIComponent(name),{method:'PUT',body:JSON.stringify({data})});
+      toast('更新成功','success');
+    } else {
+      data.name = document.getElementById('field-name')?document.getElementById('field-name').value:'';
+      const genName = data.name||(dt.replace(/\s+/g,'-')+'-'+Date.now());
+      await api('/api/resource/'+encodeURIComponent(dt),{method:'POST',body:JSON.stringify({name:genName,data})});
+      toast('创建成功','success');
+    }
+    closeModal();
+    doctypeRefresh(pageKey);
+  } catch(e) { toast('保存失败: '+e.message,'error'); }
+}
+
+async function deleteDoctypeItem(pageKey, name) {
+  if (!await confirmDialog('确定要删除 '+name+'？此操作不可撤销。')) return;
+  const dt = DOCTYPE_META[pageKey].doctype;
+  try {
+    await api('/api/resource/'+encodeURIComponent(dt)+'/'+encodeURIComponent(name),{method:'DELETE'});
+    toast('已删除','success');
+    doctypeRefresh(pageKey);
+  } catch(e) { toast('删除失败: '+e.message,'error'); }
+}
+
+async function doctypeAction(pageKey, name, action) {
+  const dt = DOCTYPE_META[pageKey].doctype;
+  try {
+    await api('/api/resource/'+encodeURIComponent(dt)+'/'+encodeURIComponent(name)+'/action',{method:'POST',body:JSON.stringify({action})});
+    toast(action==='submit'?'已提交':'已取消','success');
+    doctypeRefresh(pageKey);
+  } catch(e) { toast(action+'失败: '+e.message,'error'); }
+}
+
+async function viewDoctypeDetail(pageKey, name) {
+  const meta = DOCTYPE_META[pageKey];
+  if (!meta) return;
+  const m = document.getElementById('main-content');
+  m.innerHTML = skeletonRows(5,2);
+  try {
+    const r = await api('/api/resource/'+encodeURIComponent(meta.doctype)+'/'+encodeURIComponent(name));
+    const d = r.data||{};
+    let h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
+    h += '<button class="btn btn-ghost" onclick="switchPage(\''+pageKey+'\')">← 返回列表</button>';
+    h += '<h2 style="color:#f59e0b;font-size:18px">'+escHtml(name)+'</h2>';
+    h += '<span>'+badge(d.docstatus!==undefined?d.docstatus:d.status)+'</span>';
+    h += '</div>';
+    h += '<div class="card"><div class="detail-grid">';
+    meta.fields.filter(f=>f.type!=='child').forEach(f=>{
+      h += '<div class="detail-item"><label>'+f.label+'</label><span>'+escHtml(String(d[f.key]||'-'))+'</span></div>';
+    });
+    h += '</div></div>';
+    meta.fields.filter(f=>f.type==='child').forEach(f=>{
+      const rows = d[f.key]||[];
+      h += '<div class="card" style="margin-top:16px"><h4 style="color:#f59e0b;margin-bottom:8px">'+f.label+' ('+rows.length+')</h4>';
+      if (rows.length>0) {
+        h += '<table class="child-table"><thead><tr>';
+        f.childFields.forEach(cf=>h+='<th>'+cf.label+'</th>');
+        h += '</tr></thead><tbody>';
+        rows.forEach(row=>{
+          h += '<tr>';
+          f.childFields.forEach(cf=>h+='<td>'+escHtml(String(row[cf.key]||''))+'</td>');
+          h += '</tr>';
+        });
+        h += '</tbody></table>';
+      } else { h += '<p style="color:#64748b;font-size:12px">无明细数据</p>'; }
+      h += '</div>';
+    });
+    m.innerHTML = h;
+  } catch(e) {
+    m.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>加载失败: '+escHtml(e.message)+'</p><button class="btn btn-ghost" onclick="switchPage(\''+pageKey+'\')">← 返回</button></div>';
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ASSET LEDGER
+   ══════════════════════════════════════════════════════ */
+let assetPage = 1;
+async function renderAssetLedger() {
+  assetPage = 1;
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <input class="search-box" id="asset-search" placeholder="搜索资产..." onkeydown="if(event.key==='Enter')loadAssetLedger(1)">
+    <button class="btn btn-primary" onclick="loadAssetLedger(1)">🔍 搜索</button>
+    <button class="btn btn-success" onclick="openAssetForm()">+ 新建资产</button>
+    <button class="btn btn-warn" onclick="batchDepreciate()">📉 批量折旧</button>
+    <button class="btn btn-info" onclick="exportCSV('asset-ledger')">📥 导出CSV</button>
+    <div class="toolbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="loadAssetLedger(assetPage)">🔄 刷新</button>
+  </div>
+  <div id="asset-list">${skeletonRows(8,6)}</div>`;
+  loadAssetLedger(1);
+}
+
+async function loadAssetLedger(page) {
+  assetPage = page;
+  const search = document.getElementById('asset-search')?.value||'';
+  const offset = (page-1)*PAGE_SIZE;
+  try {
+    const r = await api('/api/asset/list?limit='+PAGE_SIZE+'&offset='+offset+(search?'&search='+encodeURIComponent(search):''));
+    const data = r.data||[];
+    const total = r.total||data.length;
+    if (data.length===0) {
+      document.getElementById('asset-list').innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>暂无资产数据</p><button class="btn btn-primary" onclick="openAssetForm()">+ 创建第一条</button></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr><th>资产编码</th><th>名称</th><th>类别</th><th>原值</th><th>累计折旧</th><th>净值</th><th>状态</th><th style="width:200px">操作</th></tr></thead><tbody>';
+    data.forEach(a=>{
+      const net = (a.purchase_cost||a.value||0)-(a.accumulated_depreciation||0);
+      h += `<tr>
+        <td style="color:#f59e0b;cursor:pointer" onclick="viewAssetDetail('${escHtml(a.name||'')}')">${escHtml(a.name||'')}</td>
+        <td>${escHtml(a.asset_name||a.item_name||a.name||'')}</td>
+        <td>${escHtml(a.category||a.asset_category||'-')}</td>
+        <td class="amount">${fmt(a.purchase_cost||a.value)}</td>
+        <td class="amount">${fmt(a.accumulated_depreciation||0)}</td>
+        <td class="amount" style="color:${net>0?'#86efac':'#fca5a5'}">${fmt(net)}</td>
+        <td>${badge(a.status||a.docstatus)}</td>
+        <td>
+          <button class="btn btn-sm btn-info" onclick="openAssetForm('${escHtml(a.name||'')}')">✏️</button>
+          <button class="btn btn-sm btn-warn" onclick="depreciateAsset('${escHtml(a.name||'')}')">📉</button>
+          <button class="btn btn-sm btn-ghost" onclick="transferAsset('${escHtml(a.name||'')}')">↗️</button>
+          <button class="btn btn-sm btn-danger" onclick="scrapAsset('${escHtml(a.name||'')}')">🗑️</button>
+        </td></tr>`;
+    });
+    h += '</tbody></table>';
+    h += pagination(page, total, PAGE_SIZE, 'loadAssetLedger');
+    document.getElementById('asset-list').innerHTML = h;
+  } catch(e) {
+    document.getElementById('asset-list').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+function openAssetForm(name) {
+  const isNew = !name;
+  let body = `<div class="form-row"><label>资产名称 <span style="color:#f87171">*</span></label><input id="af-name" ${!isNew?'disabled':''}></div>
+    <div class="form-grid">
+      <div class="form-row"><label>资产类别</label><select id="af-category"><option>电子设备</option><option>机械设备</option><option>运输设备</option><option>办公设备</option><option>房屋建筑</option></select></div>
+      <div class="form-row"><label>使用部门</label><input id="af-dept"></div>
+      <div class="form-row"><label>购置成本 <span style="color:#f87171">*</span></label><input id="af-cost" type="number" step="0.01"></div>
+      <div class="form-row"><label>残值率 (%)</label><input id="af-salvage" type="number" value="5" min="0" max="100"></div>
+      <div class="form-row"><label>使用年限</label><input id="af-life" type="number" value="5" min="1"></div>
+      <div class="form-row"><label>购置日期</label><input id="af-date" type="date"></div>
+    </div>
+    <div class="form-row"><label>备注</label><textarea id="af-remarks"></textarea></div>`;
+  openModal(isNew?'新建资产':'编辑资产', body, ()=>saveAsset(name));
+  if (!isNew) {
+    (async ()=>{
+      try {
+        const r = await api('/api/asset/list?search='+encodeURIComponent(name));
+        const a = (r.data||[]).find(x=>x.name===name);
+        if (a) {
+          document.getElementById('af-name').value = a.name||'';
+          document.getElementById('af-category').value = a.category||'电子设备';
+          document.getElementById('af-dept').value = a.department||'';
+          document.getElementById('af-cost').value = a.purchase_cost||a.value||0;
+          document.getElementById('af-salvage').value = a.salvage_rate||5;
+          document.getElementById('af-life').value = a.useful_life||5;
+          document.getElementById('af-date').value = (a.purchase_date||'').slice(0,10);
+          document.getElementById('af-remarks').value = a.remarks||'';
+        }
+      } catch(e) {}
+    })();
+  }
+}
+
+async function saveAsset(name) {
+  const data = {
+    asset_name: document.getElementById('af-name').value,
+    category: document.getElementById('af-category').value,
+    department: document.getElementById('af-dept').value,
+    purchase_cost: parseFloat(document.getElementById('af-cost').value)||0,
+    salvage_rate: parseFloat(document.getElementById('af-salvage').value)||5,
+    useful_life: parseInt(document.getElementById('af-life').value)||5,
+    purchase_date: document.getElementById('af-date').value,
+    remarks: document.getElementById('af-remarks').value,
+  };
+  if (!data.asset_name) return toast('资产名称为必填项','warn');
+  try {
+    if (name) {
+      await api('/api/asset/'+encodeURIComponent(name),{method:'PUT',body:JSON.stringify(data)});
+    } else {
+      data.name = data.asset_name||('ASSET-'+Date.now());
+      await api('/api/asset/create',{method:'POST',body:JSON.stringify(data)});
+    }
+    closeModal();
+    toast('保存成功','success');
+    loadAssetLedger(assetPage);
+  } catch(e) { toast('保存失败: '+e.message,'error'); }
+}
+
+async function depreciateAsset(name) {
+  try {
+    await api('/api/asset/'+encodeURIComponent(name)+'/depreciate',{method:'POST'});
+    toast('折旧完成','success');
+    loadAssetLedger(assetPage);
+  } catch(e) { toast('折旧失败: '+e.message,'error'); }
+}
+
+async function batchDepreciate() {
+  if (!await confirmDialog('确定要对所有资产执行批量折旧？')) return;
+  try {
+    const r = await api('/api/asset/batch-depreciate',{method:'POST'});
+    toast('批量折旧完成: '+(r.message||'成功'),'success');
+    loadAssetLedger(assetPage);
+  } catch(e) { toast('批量折旧失败: '+e.message,'error'); }
+}
+
+async function transferAsset(name) {
+  const dept = prompt('请输入目标部门:');
+  if (!dept) return;
+  try {
+    await api('/api/asset/'+encodeURIComponent(name)+'/transfer',{method:'POST',body:JSON.stringify({department:dept})});
+    toast('转移成功','success');
+    loadAssetLedger(assetPage);
+  } catch(e) { toast('转移失败: '+e.message,'error'); }
+}
+
+async function scrapAsset(name) {
+  if (!await confirmDialog('确定要报废资产 '+name+'？')) return;
+  try {
+    await api('/api/asset/'+encodeURIComponent(name)+'/scrap',{method:'POST'});
+    toast('已报废','success');
+    loadAssetLedger(assetPage);
+  } catch(e) { toast('报废失败: '+e.message,'error'); }
+}
+
+async function viewAssetDetail(name) {
+  const m = document.getElementById('main-content');
+  m.innerHTML = skeletonRows(5,2);
+  try {
+    const r = await api('/api/asset/list?search='+encodeURIComponent(name));
+    const a = (r.data||[]).find(x=>x.name===name);
+    if (!a) throw new Error('未找到资产');
+    const net = (a.purchase_cost||a.value||0)-(a.accumulated_depreciation||0);
+    m.innerHTML = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <button class="btn btn-ghost" onclick="renderAssetLedger()">← 返回</button>
+      <h2 style="color:#f59e0b;font-size:18px">${escHtml(name)}</h2></div>
+      <div class="card"><div class="detail-grid">
+        <div class="detail-item"><label>资产名称</label><span>${escHtml(a.asset_name||a.name)}</span></div>
+        <div class="detail-item"><label>类别</label><span>${escHtml(a.category||'-')}</span></div>
+        <div class="detail-item"><label>使用部门</label><span>${escHtml(a.department||'-')}</span></div>
+        <div class="detail-item"><label>购入日期</label><span>${dateFmt(a.purchase_date)}</span></div>
+        <div class="detail-item"><label>原值</label><span>${fmt(a.purchase_cost||a.value)}</span></div>
+        <div class="detail-item"><label>累计折旧</label><span>${fmt(a.accumulated_depreciation||0)}</span></div>
+        <div class="detail-item"><label>净值</label><span style="color:${net>0?'#86efac':'#fca5a5'}">${fmt(net)}</span></div>
+        <div class="detail-item"><label>使用年限</label><span>${a.useful_life||'-'} 年</span></div>
+        <div class="detail-item"><label>残值率</label><span>${a.salvage_rate||5}%</span></div>
+        <div class="detail-item"><label>状态</label><span>${badge(a.status||a.docstatus)}</span></div>
+      </div></div>`;
+  } catch(e) {
+    m.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p><button class="btn btn-ghost" onclick="renderAssetLedger()">← 返回</button></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ASSET DASHBOARD
+   ══════════════════════════════════════════════════════ */
+async function renderAssetDashboard() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = '<div id="asset-dash-content">'+skeletonRows(4,4)+'</div>';
+  try {
+    const r = await api('/api/asset/list?limit=1000');
+    const data = r.data||[];
+    const total = data.length;
+    const totalCost = data.reduce((s,a)=>s+(a.purchase_cost||a.value||0),0);
+    const totalDepr = data.reduce((s,a)=>s+(a.accumulated_depreciation||0),0);
+    const netValue = totalCost - totalDepr;
+    const byCategory = {};
+    data.forEach(a=>{
+      const cat = a.category||'未分类';
+      byCategory[cat] = (byCategory[cat]||0)+(a.purchase_cost||a.value||0);
+    });
+    document.getElementById('asset-dash-content').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-label">资产总数</div><div class="stat-value">${total}</div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">资产原值</div><div class="stat-value">${fmt(totalCost)}</div></div>
+        <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-label">累计折旧</div><div class="stat-value">${fmt(totalDepr)}</div></div>
+        <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-label">资产净值</div><div class="stat-value">${fmt(netValue)}</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><h3>📊 资产类别分布</h3><canvas id="chart-asset-cat"></canvas></div>
+        <div class="chart-box"><h3>📉 折旧率</h3><canvas id="chart-depr-rate"></canvas></div>
+      </div>`;
+    // Charts
+    setTimeout(()=>{
+      const cats = Object.keys(byCategory);
+      const ctx1 = document.getElementById('chart-asset-cat');
+      if (ctx1) new Chart(ctx1,{type:'bar',data:{labels:cats,datasets:[{label:'原值',data:cats.map(c=>byCategory[c]),backgroundColor:'#f59e0b',borderRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>'¥'+v.toLocaleString()}}}}});
+      const ctx2 = document.getElementById('chart-depr-rate');
+      if (ctx2) new Chart(ctx2,{type:'doughnut',data:{labels:['已折旧','未折旧'],datasets:[{data:[totalDepr,Math.max(0,netValue)],backgroundColor:['#ef4444','#10b981'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+    },150);
+  } catch(e) {
+    document.getElementById('asset-dash-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   FINANCIAL REPORTS (Trial Balance, Income, Balance Sheet, Cash Flow, Aging)
+   ══════════════════════════════════════════════════════ */
+const REPORT_CONFIG = {
+  'trial-balance': {endpoint:'/api/finance/trial-balance',title:'试算平衡表',icon:'📊', headers:['科目编码','科目名称','期初余额','本期借方','本期贷方','期末余额']},
+  'income-statement': {endpoint:'/api/finance/income-statement',title:'损益表',icon:'📈', headers:['项目','本期金额','上期金额']},
+  'balance-sheet': {endpoint:'/api/finance/balance-sheet',title:'资产负债表',icon:'🏦', headers:['项目','期末余额','期初余额']},
+  'cash-flow': {endpoint:'/api/finance/cash-flow',title:'现金流量表',icon:'💵', headers:['项目','本期金额']},
+  'aging': {endpoint:'/api/finance/aging',title:'账龄分析',icon:'📊', headers:['客户/供应商','未到期','1-30天','31-60天','61-90天','90天以上','合计']},
+};
+
+async function renderFinanceReport(reportKey) {
+  const cfg = REPORT_CONFIG[reportKey];
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<h1>${cfg.icon} ${cfg.title}</h1>
+    <div class="toolbar">
+      <button class="btn btn-info" onclick="exportCSV('${reportKey}')">📥 导出CSV</button>
+      <div class="toolbar-spacer"></div>
+      <button class="btn btn-ghost" onclick="switchPage('${reportKey}')">🔄 刷新</button>
+    </div>
+    <div id="report-content">${skeletonRows(8,cfg.headers.length)}</div>`;
+  try {
+    const r = await api(cfg.endpoint);
+    const data = Array.isArray(r)?r:(r.data||r.rows||[]);
+    if (data.length===0) {
+      document.getElementById('report-content').innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr>';
+    cfg.headers.forEach(hdr=>h+='<th>'+hdr+'</th>');
+    h += '</tr></thead><tbody>';
+    let totalRow = {};
+    data.forEach((row,i)=>{
+      h += '<tr>';
+      if (reportKey==='trial-balance') {
+        h += `<td>${escHtml(row.account_code||row.account||'')}</td>`;
+        h += `<td>${escHtml(row.account_name||row.account||'')}</td>`;
+        h += `<td class="amount">${fmt(row.opening_balance||row.opening||0)}</td>`;
+        h += `<td class="amount">${fmt(row.debit||0)}</td>`;
+        h += `<td class="amount">${fmt(row.credit||0)}</td>`;
+        h += `<td class="amount">${fmt(row.closing_balance||row.closing||0)}</td>`;
+      } else if (reportKey==='income-statement') {
+        h += `<td>${escHtml(row.item||row.name||'')}</td>`;
+        h += `<td class="amount">${fmt(row.current_amount||row.amount||0)}</td>`;
+        h += `<td class="amount">${fmt(row.previous_amount||row.prev||0)}</td>`;
+      } else if (reportKey==='balance-sheet') {
+        h += `<td>${escHtml(row.item||row.name||'')}</td>`;
+        h += `<td class="amount">${fmt(row.closing_balance||row.closing||0)}</td>`;
+        h += `<td class="amount">${fmt(row.opening_balance||row.opening||0)}</td>`;
+      } else if (reportKey==='cash-flow') {
+        h += `<td>${escHtml(row.item||row.name||'')}</td>`;
+        h += `<td class="amount">${fmt(row.amount||0)}</td>`;
+      } else if (reportKey==='aging') {
+        h += `<td>${escHtml(row.party||row.customer||row.supplier||'')}</td>`;
+        h += `<td class="amount">${fmt(row.not_due||row.range0||0)}</td>`;
+        h += `<td class="amount">${fmt(row.days_1_30||row.range1||0)}</td>`;
+        h += `<td class="amount">${fmt(row.days_31_60||row.range2||0)}</td>`;
+        h += `<td class="amount">${fmt(row.days_61_90||row.range3||0)}</td>`;
+        h += `<td class="amount">${fmt(row.over_90||row.range4||0)}</td>`;
+        h += `<td class="amount">${fmt(row.total||0)}</td>`;
+      }
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    document.getElementById('report-content').innerHTML = h;
+  } catch(e) {
+    document.getElementById('report-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>加载失败: ${escHtml(e.message)}</p></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   INVENTORY
+   ══════════════════════════════════════════════════════ */
+async function renderInventory() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <input class="search-box" id="inv-search" placeholder="搜索物料..." onkeydown="if(event.key==='Enter')loadInventory()">
+    <button class="btn btn-primary" onclick="loadInventory()">🔍 搜索</button>
+    <button class="btn btn-success" onclick="openItemForm()">+ 新增物料</button>
+    <button class="btn btn-info" onclick="showCSVImport('Item','/api/inventory/item','loadInventory','item_code,item_name,category,unit,specification,unit_price,warehouse')">📥 导入CSV</button>
+    <button class="btn btn-success" onclick="stockInOut('in')">📥 入库</button>
+    <button class="btn btn-warn" onclick="stockInOut('out')">📤 出库</button>
+    <button class="btn btn-info" onclick="exportCSV('inventory')">📥 导出CSV</button>
+    <div class="toolbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="loadInventory()">🔄 刷新</button>
+  </div>
+  <div id="inv-content">${skeletonRows(8,5)}</div>`;
+  loadInventory();
+}
+
+async function loadInventory() {
+  const search = document.getElementById('inv-search')?.value||'';
+  try {
+    const r = await api('/api/inventory/stock'+(search?'?search='+encodeURIComponent(search):''));
+    const data = r.data||[];
+    if (data.length===0) {
+      document.getElementById('inv-content').innerHTML = `<div class="empty-state"><div class="icon">📦</div><p>暂无库存数据</p></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr><th>物料编码</th><th>物料名称</th><th>规格</th><th>库存数量</th><th>单位</th><th>单价</th><th>库存价值</th></tr></thead><tbody>';
+    data.forEach(i=>{
+      const v = (i.qty||0)*(i.unit_price||i.rate||0);
+      h += `<tr>
+        <td style="color:#f59e0b">${escHtml(i.item_code||i.name||'')}</td>
+        <td>${escHtml(i.item_name||i.name||'')}</td>
+        <td>${escHtml(i.specification||i.uom||'-')}</td>
+        <td class="amount" style="color:${(i.qty||0)>0?'#86efac':'#fca5a5'}">${fmtNum(i.qty||0)}</td>
+        <td>${escHtml(i.uom||'个')}</td>
+        <td class="amount">${fmt(i.unit_price||i.rate||0)}</td>
+        <td class="amount">${fmt(v)}</td></tr>`;
+    });
+    h += '</tbody></table>';
+    document.getElementById('inv-content').innerHTML = h;
+  } catch(e) {
+    document.getElementById('inv-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+function stockInOut(type) {
+  const isIn = type==='in';
+  const body = `<div class="form-row"><label>物料编码 <span style="color:#f87171">*</span></label><input id="sio-code"></div>
+    <div class="form-row"><label>物料名称</label><input id="sio-name"></div>
+    <div class="form-row"><label>数量 <span style="color:#f87171">*</span></label><input id="sio-qty" type="number" step="0.01" min="0.01"></div>
+    <div class="form-row"><label>单价</label><input id="sio-price" type="number" step="0.01"></div>
+    <div class="form-row"><label>仓库</label><input id="sio-wh" value="主仓库"></div>
+    <div class="form-row"><label>备注</label><textarea id="sio-remarks"></textarea></div>`;
+  openModal(isIn?'入库':'出库', body, async ()=>{
+    const data = {
+      item_code: document.getElementById('sio-code').value,
+      item_name: document.getElementById('sio-name').value,
+      qty: parseFloat(document.getElementById('sio-qty').value)||0,
+      unit_price: parseFloat(document.getElementById('sio-price').value)||0,
+      warehouse: document.getElementById('sio-wh').value,
+      remarks: document.getElementById('sio-remarks').value,
+    };
+    if (!data.item_code||data.qty<=0) return toast('物料编码和数量为必填项','warn');
+    try {
+      await api('/api/inventory/'+(isIn?'receipt':'issue'),{method:'POST',body:JSON.stringify(data)});
+      closeModal();
+      toast(isIn?'入库成功':'出库成功','success');
+      loadInventory();
+    } catch(e) { toast((isIn?'入库':'出库')+'失败: '+e.message,'error'); }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   BOM
+   ══════════════════════════════════════════════════════ */
+async function renderBOM() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <input class="search-box" id="bom-search" placeholder="搜索BOM..." onkeydown="if(event.key==='Enter')loadBOM()">
+    <button class="btn btn-primary" onclick="loadBOM()">🔍 搜索</button>
+    <button class="btn btn-success" onclick="openBOMForm()">+ 新建BOM</button>
+    <button class="btn btn-info" onclick="exportCSV('bom')">📥 导出CSV</button>
+    <div class="toolbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="loadBOM()">🔄 刷新</button>
+  </div>
+  <div id="bom-content">${skeletonRows(8,5)}</div>`;
+  loadBOM();
+}
+
+async function loadBOM() {
+  const search = document.getElementById('bom-search')?.value||'';
+  try {
+    const r = await api('/api/production/bom'+(search?'?search='+encodeURIComponent(search):''));
+    const data = r.data||[];
+    if (data.length===0) {
+      document.getElementById('bom-content').innerHTML = `<div class="empty-state"><div class="icon">🏗️</div><p>暂无BOM数据</p><button class="btn btn-primary" onclick="openBOMForm()">+ 创建第一个</button></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr><th>BOM名称</th><th>成品</th><th>版本</th><th>状态</th><th>物料数</th><th>创建时间</th><th style="width:80px">操作</th></tr></thead><tbody>';
+    data.forEach(b=>{
+      const itemCount = b.items?b.items.length:(b.item_count||0);
+      h += `<tr>
+        <td style="color:#f59e0b">${escHtml(b.name||'')}</td>
+        <td>${escHtml(b.product||b.finished_good||'-')}</td>
+        <td>${escHtml(b.version||'1.0')}</td>
+        <td>${badge(b.status||b.docstatus)}</td>
+        <td>${itemCount}</td>
+        <td style="font-size:11px;color:#94a3b8">${dtFmt(b.creation||b.created)}</td>
+        <td><button class="btn btn-info btn-sm" onclick="checkBOM('${escHtml(b.name||'')}')">🔍 检查</button></td></tr>`;
+    });
+    h += '</tbody></table>';
+    document.getElementById('bom-content').innerHTML = h;
+  } catch(e) {
+    document.getElementById('bom-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+async function checkBOM(bomName) {
+  const m = document.getElementById('main-content');
+  const qty = prompt('输入生产数量:', '1')||'1';
+  try {
+    const r = await api('/api/production/bom-check/'+encodeURIComponent(bomName)+'?qty='+parseFloat(qty));
+    const items = r.items||[];
+    const ok = r.all_ok;
+    let html = `<div class="card" style="margin-top:16px"><h3 style="color:${ok?'#22c55e':'#ef4444'}">${ok?'✅ 物料齐全':'❌ 物料不足'} — ${escHtml(bomName)} × ${parseFloat(qty)}</h3>
+      <table class="table" style="margin-top:10px"><thead><tr><th>物料</th><th>需要</th><th>库存</th><th>状态</th></tr></thead><tbody>`;
+    items.forEach(i=>{
+      html += `<tr><td>${escHtml(i.item_name||i.item_code)}</td><td>${fmtNum(i.qty_needed||0)}</td><td style="color:${(i.stock_qty||0)>=(i.qty_needed||0)?'#86efac':'#fca5a5'}">${fmtNum(i.stock_qty||0)}</td><td>${i.ok?'✅ 充足':'❌ 缺 '+fmtNum(i.shortage||0)}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('bom-content').insertAdjacentHTML('afterend', html);
+  } catch(e) { toast('检查失败: '+e.message,'error'); }
+}
+
+/* ═══ 物料创建（含自动编码预览）═══ */
+
+function openItemForm() {
+  let body = '<div class="form-row"><label>物料名称 <span style="color:#f87171">*</span></label><input id="if-name"></div><div class="form-grid"><div class="form-row"><label>分类</label><select id="if-category" onchange="previewItemCode()"><option>原材料</option><option>成品</option><option>半成品</option><option>包材</option><option>电子元器件</option><option>机械设备</option><option>办公用品</option><option>服务</option></select></div><div class="form-row"><label>单位</label><select id="if-unit"><option>个</option><option>台</option><option>套</option><option>kg</option><option>米</option><option>升</option><option>箱</option></select></div><div class="form-row"><label>规格型号</label><input id="if-spec"></div><div class="form-row"><label>参考单价 ¥</label><input id="if-price" type="number" step="0.01"></div></div><div class="form-row"><label>物料编码 <span style="color:#94a3b8;font-size:11px">（自动生成，可手动修改）</span></label><div style="display:flex;gap:8px"><input id="if-code" style="flex:1;font-family:monospace;font-size:15px" placeholder="选择分类后自动生成..."><button class="btn btn-sm btn-ghost" onclick="previewItemCode()" style="white-space:nowrap">🔄 重新生成</button></div><div id="if-code-hint" style="font-size:11px;color:#94a3b8;margin-top:4px"></div></div><div class="form-row"><label>仓库</label><input id="if-warehouse" value="主仓库"></div>';
+  openModal('新增物料', body, saveItem);
+  previewItemCode();
+}
+
+async function previewItemCode() {
+  const cat = document.getElementById('if-category')?.value||'原材料';
+  try {
+    const r = await api('/api/inventory/code-preview?category='+encodeURIComponent(cat));
+    document.getElementById('if-code').value = r.next_code||'';
+    const rules = r.all_rules||[];
+    let hints = '<b>📋 编码规则：</b> ';
+    rules.forEach(rule=>{ hints += '<span style="color:'+(rule.prefix===r.prefix?'#f59e0b':'#64748b')+'">'+rule.category+'→'+rule.prefix+'</span> '; });
+    hints += '<br>当前分类 <b style="color:#f59e0b">'+r.category+'</b> → 前缀 <b style="color:#f59e0b">'+r.prefix+'-YYYY-NNNNN</b>';
+    document.getElementById('if-code-hint').innerHTML = hints;
+  } catch(e) {}
+}
+
+async function saveItem() {
+  const data = {
+    item_code: document.getElementById('if-code').value,
+    item_name: document.getElementById('if-name').value,
+    category: document.getElementById('if-category').value,
+    unit: document.getElementById('if-unit').value,
+    specification: document.getElementById('if-spec').value,
+    unit_price: parseFloat(document.getElementById('if-price').value)||0,
+    warehouse: document.getElementById('if-warehouse').value,
+  };
+  if (!data.item_name) { toast('请输入物料名称','error'); return; }
+  if (!data.item_code) { toast('请生成物料编码','error'); return; }
+  try {
+    await api('/api/inventory/item',{method:'POST',body:JSON.stringify({data})});
+    closeModal(); toast('物料已创建: '+data.item_code,'success'); loadInventory();
+  } catch(e) { toast('创建失败: '+e.message,'error'); }
+}
+
+function openBOMForm() {
+
+  const body = `<div class="form-row"><label>BOM名称 <span style="color:#f87171">*</span></label><input id="bom-name"></div>
+    <div class="form-row"><label>成品物料</label><input id="bom-product"></div>
+    <div class="form-row"><label>版本</label><input id="bom-ver" value="1.0"></div>
+    <div class="form-row"><label>备注</label><textarea id="bom-remarks"></textarea></div>
+    <div style="margin:12px 0"><strong style="color:#f59e0b;font-size:13px">物料清单</strong>
+      <table class="child-table"><thead><tr><th>物料编码</th><th>物料名称</th><th>数量</th><th>单位</th><th></th></tr></thead><tbody id="bom-items"></tbody></table>
+      <button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="addBOMItem()">+ 添加物料</button></div>`;
+  openModal('新建BOM', body, async ()=>{
+    const items = [];
+    document.querySelectorAll('#bom-items tr').forEach(tr=>{
+      const inps = tr.querySelectorAll('input');
+      if (inps.length>=3 && inps[0].value) items.push({item_code:inps[0].value,item_name:inps[1].value,qty:parseFloat(inps[2].value)||0,uom:inps[3]?inps[3].value:'个'});
+    });
+    const data = {
+      name: document.getElementById('bom-name').value,
+      product: document.getElementById('bom-product').value,
+      version: document.getElementById('bom-ver').value,
+      remarks: document.getElementById('bom-remarks').value,
+      items: items,
+    };
+    if (!data.name) return toast('BOM名称为必填项','warn');
+    try {
+      await api('/api/production/bom',{method:'POST',body:JSON.stringify(data)});
+      closeModal();
+      toast('BOM创建成功','success');
+      loadBOM();
+    } catch(e) { toast('创建失败: '+e.message,'error'); }
+  });
+}
+
+function addBOMItem() {
+  const tbody = document.getElementById('bom-items');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  ['item_code','item_name','qty','uom'].forEach(k=>{
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    if (k==='qty') inp.type='number';
+    if (k==='uom') inp.value='个';
+    inp.setAttribute('data-field',k);
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  const delTd = document.createElement('td');
+  const btn = document.createElement('button');
+  btn.className='btn btn-sm btn-danger';btn.textContent='✕';btn.onclick=()=>tr.remove();
+  delTd.appendChild(btn);
+  tr.appendChild(delTd);
+  tbody.appendChild(tr);
+}
+
+/* ══════════════════════════════════════════════════════
+   WORK ORDER
+   ══════════════════════════════════════════════════════ */
+async function renderWorkOrder() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <input class="search-box" id="wo-search" placeholder="搜索工单..." onkeydown="if(event.key==='Enter')loadWorkOrders()">
+    <button class="btn btn-primary" onclick="loadWorkOrders()">🔍 搜索</button>
+    <button class="btn btn-success" onclick="openWOForm()">+ 新建工单</button>
+    <button class="btn btn-info" onclick="exportCSV('work-order')">📥 导出CSV</button>
+    <div class="toolbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="loadWorkOrders()">🔄 刷新</button>
+  </div>
+  <div id="wo-content">${skeletonRows(8,6)}</div>`;
+  loadWorkOrders();
+}
+
+async function loadWorkOrders() {
+  const search = document.getElementById('wo-search')?.value||'';
+  try {
+    const r = await api('/api/production/work-order'+(search?'?search='+encodeURIComponent(search):''));
+    const data = r.data||[];
+    if (data.length===0) {
+      document.getElementById('wo-content').innerHTML = `<div class="empty-state"><div class="icon">🏭</div><p>暂无生产工单</p><button class="btn btn-primary" onclick="openWOForm()">+ 创建第一个</button></div>`;
+      return;
+    }
+    let h = '<table class="table"><thead><tr><th>工单号</th><th>产品</th><th>数量</th><th>状态</th><th>计划日期</th><th>创建时间</th><th style="width:140px">操作</th></tr></thead><tbody>';
+    data.forEach(w=>{
+      const st = w.status||'';
+      const canComplete = st!=='Completed'&&st!=='Cancelled'&&st!=='completed'&&st!=='cancelled';
+      const canCancel = st!=='Completed'&&st!=='Cancelled'&&st!=='completed'&&st!=='cancelled';
+      h += `<tr>
+        <td style="color:#f59e0b">${escHtml(w.name||'')}</td>
+        <td>${escHtml(w.product||w.item_name||'-')}</td>
+        <td>${fmtNum(w.qty||w.quantity||0)}</td>
+        <td>${badge(st||w.docstatus)}</td>
+        <td>${dateFmt(w.planned_date||w.due_date)}</td>
+        <td style="font-size:11px;color:#94a3b8">${dtFmt(w.creation||w.created)}</td>
+        <td>${canComplete?`<button class="btn btn-success btn-sm" onclick="woAction('${escHtml(w.name)}','complete')">✅ 完工</button> `:''}${canCancel?`<button class="btn btn-danger btn-sm" onclick="woAction('${escHtml(w.name)}','cancel')">❌ 取消</button>`:''}</td></tr>`;
+    });
+    h += '</tbody></table>';
+    document.getElementById('wo-content').innerHTML = h;
+  } catch(e) {
+    document.getElementById('wo-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+function openWOForm() {
+  const body = `<div class="form-row"><label>产品名称 <span style="color:#f87171">*</span></label><input id="wo-product"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>生产数量</label><input id="wo-qty" type="number" value="1" min="1"></div>
+      <div class="form-row"><label>单位</label><input id="wo-uom" value="个"></div>
+      <div class="form-row"><label>计划开始</label><input id="wo-start" type="date"></div>
+      <div class="form-row"><label>计划完成</label><input id="wo-end" type="date"></div>
+    </div>
+    <div class="form-row"><label>BOM编号</label><input id="wo-bom"></div>
+    <div class="form-row"><label>备注</label><textarea id="wo-remarks"></textarea></div>`;
+  openModal('新建生产工单', body, async ()=>{
+    const data = {
+      product: document.getElementById('wo-product').value,
+      qty: parseInt(document.getElementById('wo-qty').value)||1,
+      uom: document.getElementById('wo-uom').value,
+      planned_start: document.getElementById('wo-start').value,
+      planned_end: document.getElementById('wo-end').value,
+      bom: document.getElementById('wo-bom').value,
+      remarks: document.getElementById('wo-remarks').value,
+    };
+    if (!data.product) return toast('产品名称为必填项','warn');
+    try {
+      await api('/api/production/work-order',{method:'POST',body:JSON.stringify(data)});
+      closeModal();
+      toast('工单创建成功','success');
+      loadWorkOrders();
+    } catch(e) { toast('创建失败: '+e.message,'error'); }
+  });
+}
+
+async function woAction(name, action) {
+  try {
+    const r = await api('/api/production/'+action+'/'+encodeURIComponent(name),{method:'POST'});
+    toast(r.message||(action==='complete'?'已完工':'已取消'),'success');
+    loadWorkOrders();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════════
+   USER MANAGEMENT
+   ══════════════════════════════════════════════════════ */
+const ROLE_LABELS = {'System Manager':'🔑 系统管理员','User':'👤 普通用户','Auditor':'👁️ 审计员'};
+const ROLE_OPTIONS = ['System Manager','User','Auditor'];
+
+async function renderUsers() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <button class="btn btn-primary" onclick="openUserCreate()">+ 新建用户</button>
+    <button class="btn btn-info" onclick="exportCSV('accounts')">📥 导出CSV</button>
+    <div class="toolbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="renderUsers()">🔄 刷新</button>
+  </div>
+  <div id="users-content">${skeletonRows(5,6)}</div>`;
+  try {
+    const r = await api('/api/auth/users');
+    let html = '<table class="table"><thead><tr><th>用户名</th><th>邮箱</th><th>角色</th><th>状态</th><th>创建时间</th><th style="width:220px">操作</th></tr></thead><tbody>';
+    for (let u of (r.data||[])) {
+      html += `<tr>
+        <td><strong>${escHtml(u.username)}</strong>${u.username==='admin'?' <span style="color:#f59e0b;font-size:11px">⭐</span>':''}</td>
+        <td>${escHtml(u.email||'-')}</td>
+        <td><select onchange="updateUserRole('${escHtml(u.username)}',this.value)" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:4px 8px;border-radius:4px;font-size:12px">${ROLE_OPTIONS.map(ro=>`<option value="${ro}" ${u.role===ro?'selected':''}>${ROLE_LABELS[ro]||ro}</option>`).join('')}</select></td>
+        <td><span class="badge ${u.enabled?'badge-approved':'badge-rejected'}" style="cursor:pointer" onclick="toggleUser('${escHtml(u.username)}',${u.enabled})">${u.enabled?'✅ 启用':'⛔ 禁用'}</span></td>
+        <td style="font-size:11px;color:#94a3b8">${(u.created||'').slice(0,10)}</td>
+        <td>
+          <button class="btn btn-sm btn-info" onclick="resetUserPw('${escHtml(u.username)}')">🔑</button>
+          ${u.username!=='admin'?`<button class="btn btn-sm btn-danger" onclick="removeUser('${escHtml(u.username)}')">🗑️</button>`:''}
+          <button class="btn btn-sm btn-ghost" onclick="openUserCreate('${escHtml(u.username)}')">✏️</button>
+        </td></tr>`;
+    }
+    html += '</tbody></table>';
+    if (!r.data||r.data.length===0) html = '<div class="empty-state"><div class="icon">👤</div><p>暂无用户数据</p></div>';
+    document.getElementById('users-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('users-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p><p style="font-size:12px;color:#94a3b8">需要系统管理员权限</p></div>`;
+  }
+}
+
+async function updateUserRole(username, role) {
+  await api('/api/auth/users',{method:'PUT',body:JSON.stringify({username,role})});
+  toast('角色已更新','success');
+}
+
+async function toggleUser(username, currently) {
+  await api('/api/auth/users',{method:'PUT',body:JSON.stringify({username,enabled:currently?0:1})});
+  toast(currently?'已禁用':'已启用','success');
+  renderUsers();
+}
+
+async function resetUserPw(username) {
+  const pw = prompt(`为 "${username}" 设置新密码（至少6位）:`);
+  if (!pw||pw.length<6) return toast('密码至少6位','warn');
+  await api('/api/auth/users',{method:'PUT',body:JSON.stringify({username,password:pw})});
+  toast('密码已重置','success');
+}
+
+async function removeUser(username) {
+  if (!await confirmDialog(`确定删除用户 "${username}"？`)) return;
+  await api('/api/auth/users/'+encodeURIComponent(username),{method:'DELETE'});
+  toast('已删除','success');
+  renderUsers();
+}
+
+function openUserCreate(username) {
+  const isNew = !username;
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-title').textContent = isNew?'新建用户':'编辑用户';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row"><label>用户名 <span style="color:#f87171">*</span></label><input id="new-username" ${!isNew?'disabled':''}></div>
+    <div class="form-row"><label>密码 ${isNew?'<span style="color:#f87171">*</span>':''}</label><input id="new-password" type="password" placeholder="${isNew?'至少6位':'留空不修改'}"></div>
+    <div class="form-row"><label>邮箱</label><input id="new-email"></div>
+    <div class="form-row"><label>角色</label><select id="new-role">${ROLE_OPTIONS.map(r=>`<option value="${r}">${ROLE_LABELS[r]||r}</option>`).join('')}</select></div>`;
+  if (isNew) document.getElementById('new-password').required = true;
+  document.getElementById('modal-save-btn').onclick = async ()=>{
+    const u = document.getElementById('new-username').value.trim();
+    const p = document.getElementById('new-password').value;
+    if (!u) return toast('用户名为必填项','warn');
+    if (isNew && p.length<6) return toast('密码至少6位','warn');
+    try {
+      if (isNew) {
+        await api('/api/auth/register',{method:'POST',body:JSON.stringify({username:u,password:p,email:document.getElementById('new-email').value.trim(),role:document.getElementById('new-role').value})});
+      } else {
+        const body = {username:u,role:document.getElementById('new-role').value,email:document.getElementById('new-email').value.trim()};
+        if (p) body.password = p;
+        await api('/api/auth/users',{method:'PUT',body:JSON.stringify(body)});
+      }
+      closeModal();
+      toast(isNew?'用户创建成功':'用户更新成功','success');
+      renderUsers();
+    } catch(e) { toast('保存失败: '+e.message,'error'); }
+  };
+  modal.classList.add('show');
+  if (!isNew) {
+    document.getElementById('new-username').value = username;
+    (async ()=>{
+      try {
+        const r = await api('/api/auth/users');
+        const u = (r.data||[]).find(x=>x.username===username);
+        if (u) {
+          document.getElementById('new-email').value = u.email||'';
+          document.getElementById('new-role').value = u.role||'User';
+        }
+      } catch(e) {}
+    })();
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   AUDIT LOG
+   ══════════════════════════════════════════════════════ */
+async function renderAudit() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="toolbar">
+    <button class="btn btn-info" onclick="renderAudit()">🔄 刷新</button>
+    <div class="toolbar-spacer"></div>
+  </div>
+  <div id="audit-content">${skeletonRows(10,5)}</div>`;
+  try {
+    const r = await api('/api/audit');
+    const data = r.data||[];
+    if (data.length===0) {
+      document.getElementById('audit-content').innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>暂无操作记录</p></div>';
+      return;
+    }
+    const icon = {'Sales Invoice':'📄','Purchase Invoice':'📦','Asset':'📋','Journal Entry':'📒','Item':'📦','BOM':'🏗️','Work Order':'🏭','User':'👤','System Settings':'⚙️'};
+    let h = '<table class="table"><thead><tr><th>时间</th><th>模块</th><th>单据</th><th>状态</th><th>操作人</th></tr></thead><tbody>';
+    for (let e of data.slice(0,50)) {
+      const cls = e.docstatus==='已提交'||e.docstatus===1?'color:#10b981':e.docstatus==='已取消'||e.docstatus===2?'color:#ef4444':'color:#94a3b8';
+      h += `<tr>
+        <td style="font-size:11px;color:#94a3b8">${dtFmt(e.modified||e.creation)}</td>
+        <td>${icon[e.doctype]||'📋'} ${escHtml(e.doctype||'')}</td>
+        <td><strong>${escHtml(e.name||'')}</strong></td>
+        <td style="${cls}">${escHtml(e.docstatus||'')}</td>
+        <td style="font-size:11px;color:#94a3b8">${escHtml(e.owner||'')}</td></tr>`;
+    }
+    h += '</tbody></table>';
+    document.getElementById('audit-content').innerHTML = h;
+  } catch(e) {
+    document.getElementById('audit-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SETTINGS
+   ══════════════════════════════════════════════════════ */
+async function renderSettings() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div id="settings-content">${skeletonRows(1,6)}</div>`;
+  try {
+    let cfg = {};
+    try { const r = await api('/api/resource/System Settings/default'); cfg = r.data||{}; } catch(e) {}
+    document.getElementById('settings-content').innerHTML = `
+      <div style="background:#1e293b;padding:24px;border-radius:12px;max-width:700px">
+        <h3 style="color:#f59e0b;margin-bottom:16px">🏢 公司信息</h3>
+        <div class="form-row"><label>公司名称</label><input id="cfg-company" value="${escHtml(cfg.company_name||'默认可视科技')}"></div>
+        <div class="form-row"><label>税务号</label><input id="cfg-tax-id" value="${escHtml(cfg.tax_id||'')}"></div>
+        <div class="form-row"><label>地址</label><input id="cfg-address" value="${escHtml(cfg.address||'')}"></div>
+        <div class="form-row"><label>电话</label><input id="cfg-phone" value="${escHtml(cfg.phone||'')}"></div>
+        <h3 style="color:#f59e0b;margin:20px 0 16px">📅 会计期间</h3>
+        <div class="form-row"><label>会计年度起始</label><input id="cfg-year-start" type="date" value="${cfg.year_start_date||'2026-01-01'}"></div>
+        <div class="form-row"><label>当前会计期间</label><input id="cfg-period" value="${escHtml(cfg.current_period||'2026-05')}" placeholder="YYYY-MM"></div>
+        <h3 style="color:#f59e0b;margin:20px 0 16px">💰 税务设置</h3>
+        <div class="form-row"><label>增值税率 (%)</label><input id="cfg-vat" type="number" value="${cfg.vat_rate||13}" step="0.5" min="0" max="25"></div>
+        <div class="form-row"><label>默认币种</label><select id="cfg-currency">
+          <option value="CNY" ${(cfg.currency||'CNY')==='CNY'?'selected':''}>人民币 CNY</option>
+          <option value="USD" ${cfg.currency==='USD'?'selected':''}>美元 USD</option>
+          <option value="EUR" ${cfg.currency==='EUR'?'selected':''}>欧元 EUR</option>
+        </select></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #334155">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 保存配置</button>
+        </div></div>`;
+  } catch(e) {
+    document.getElementById('settings-content').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+async function saveSettings() {
+  const data = {
+    company_name: document.getElementById('cfg-company').value,
+    tax_id: document.getElementById('cfg-tax-id').value,
+    address: document.getElementById('cfg-address').value,
+    phone: document.getElementById('cfg-phone').value,
+    year_start_date: document.getElementById('cfg-year-start').value,
+    current_period: document.getElementById('cfg-period').value,
+    vat_rate: parseFloat(document.getElementById('cfg-vat').value)||13,
+    currency: document.getElementById('cfg-currency').value,
+  };
+  try {
+    await api('/api/resource/System Settings/default',{method:'POST',body:JSON.stringify({name:'default',data})});
+    toast('配置已保存','success');
+  } catch(e) {
+    try {
+      await api('/api/resource/System Settings/default',{method:'PUT',body:JSON.stringify({data})});
+      toast('配置已更新','success');
+    } catch(e2) { toast('保存失败: '+e2.message,'error'); }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   CRM — 客户关系管理
+   ══════════════════════════════════════════════════════ */
+
+/// 通用 CRM 列表渲染（客户/潜在客户/商机/联系人）
+async function renderCRMList(doctype, label, icon) {
+  const m = document.getElementById('main-content');
+  const apiPath = doctype.toLowerCase();
+  m.innerHTML = `<div class="section-header">${icon} ${label}列表</div>
+    <div class="toolbar"><input class="search-box" placeholder="搜索${label}..." onkeyup="crmSearch('${doctype}',this.value)"><button class="btn btn-primary" onclick="crmShowForm('${doctype}','')">+ 新增</button><button class="btn btn-info" onclick="showCSVImport('${doctype}','/api/crm/${doctype.toLowerCase()}','renderCRMList')">📥 导入CSV</button></div>
+    <div class="data-table" id="crm-table-${doctype}">${skeletonRows(1,4)}</div>`;
+  try {
+    const res = await api('/api/crm/'+apiPath);
+    const docs = res.data||[];
+    let html = '<table><thead><tr>';
+    if (doctype==='Customer') html+='<th>客户编号</th><th>公司名称</th><th>联系人</th><th>电话</th><th>邮箱</th><th>客户组</th><th>状态</th><th>操作</th>';
+    else if (doctype==='Lead') html+='<th>线索编号</th><th>公司名称</th><th>联系人</th><th>电话</th><th>来源</th><th>状态</th><th>操作</th>';
+    else if (doctype==='Opportunity') html+='<th>商机编号</th><th>标题</th><th>客户</th><th>预计金额</th><th>阶段</th><th>成交概率</th><th>预计成交日</th><th>操作</th>';
+    else if (doctype==='Contact') html+='<th>联系人编号</th><th>姓名</th><th>职位</th><th>电话</th><th>邮箱</th><th>所属客户</th><th>状态</th><th>操作</th>';
+    html+='</tr></thead><tbody>';
+    docs.forEach(d=>{
+      html+='<tr>';
+      html+=`<td>${escHtml(d.name||'')}</td>`;
+      if (doctype==='Customer') html+=`<td>${escHtml(d.company_name||'')}</td><td>${escHtml(d.contact_person||'')}</td><td>${escHtml(d.phone||'')}</td><td>${escHtml(d.email||'')}</td><td>${escHtml(d.customer_group||'')}</td><td><span class="badge">${escHtml(d.status||'')}</span></td>`;
+      else if (doctype==='Lead') html+=`<td>${escHtml(d.company_name||'')}</td><td>${escHtml(d.contact_person||'')}</td><td>${escHtml(d.phone||'')}</td><td>${escHtml(d.source||'')}</td><td><span class="badge">${escHtml(d.status||'')}</span></td>`;
+      else if (doctype==='Opportunity') {
+        const amount = parseFloat(d.expected_amount||0);
+        html+=`<td>${escHtml(d.title||'')}</td><td>${escHtml(d.customer_name||'')}</td><td style="text-align:right">¥${amount.toLocaleString()}</td><td><span class="badge">${escHtml(d.stage||'')}</span></td><td>${d.probability||0}%</td><td>${escHtml(d.expected_close_date||'')}</td>`;
+      }
+      else if (doctype==='Contact') html+=`<td>${escHtml(d.full_name||'')}</td><td>${escHtml(d.designation||'')}</td><td>${escHtml(d.phone||'')}</td><td>${escHtml(d.email||'')}</td><td>${escHtml(d.customer||'')}</td><td><span class="badge">${escHtml(d.status||'')}</span></td>`;
+      html+=`<td><button class="btn btn-sm" onclick="crmShowForm('${doctype}','${escHtml(d.name||'')}')">编辑</button>`;
+      if (doctype==='Lead'&&d.status!=='已转化') html+=` <button class="btn btn-sm" onclick="crmConvertLead('${escHtml(d.name||'')}')">转化</button>`;
+      html+='</td></tr>';
+    });
+    html+='</tbody></table>';
+    if (!docs.length) html='<div class="empty">暂无'+label+'数据，点击"+ 新增"添加</div>';
+    document.getElementById('crm-table-'+doctype).innerHTML=html;
+  } catch(e) { document.getElementById('crm-table-'+doctype).innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+/// 搜索
+function crmSearch(doctype, q) {
+  const rows = document.querySelectorAll(`#crm-table-${doctype} tbody tr`);
+  rows.forEach(r=>{ const t=r.textContent.toLowerCase(); r.style.display=q&&!t.includes(q.toLowerCase())?'none':''; });
+}
+
+/// 表单弹窗
+async function crmShowForm(doctype, name) {
+  let doc = {};
+  if (name) { try { const r=await api('/api/crm/'+doctype.toLowerCase()+'/'+name); doc=r.data||{}; } catch(e) { toast('加载失败','error'); return; } }
+  const label = doctype==='Customer'?'客户':doctype==='Lead'?'潜在客户':doctype==='Opportunity'?'商机':'联系人';
+  let fields='';
+  if (doctype==='Customer') fields=`<div class="form-group"><label>公司名称</label><input id="f-company_name" value="${escHtml(doc.company_name||'')}"></div><div class="form-row"><div class="form-group"><label>联系人</label><input id="f-contact_person" value="${escHtml(doc.contact_person||'')}"></div><div class="form-group"><label>电话</label><input id="f-phone" value="${escHtml(doc.phone||'')}"></div></div><div class="form-group"><label>邮箱</label><input id="f-email" value="${escHtml(doc.email||'')}"></div><div class="form-row"><div class="form-group"><label>客户组</label><select id="f-customer_group"><option>商业客户</option><option>政府机构</option><option>个人客户</option></select></div><div class="form-group"><label>状态</label><select id="f-status"><option>active</option><option>inactive</option></select></div></div><div class="form-group"><label>地址</label><input id="f-address" value="${escHtml(doc.address||'')}"></div>`;
+  else if (doctype==='Lead') fields=`<div class="form-group"><label>公司名称</label><input id="f-company_name" value="${escHtml(doc.company_name||'')}"></div><div class="form-row"><div class="form-group"><label>联系人</label><input id="f-contact_person" value="${escHtml(doc.contact_person||'')}"></div><div class="form-group"><label>电话</label><input id="f-phone" value="${escHtml(doc.phone||'')}"></div></div><div class="form-group"><label>邮箱</label><input id="f-email" value="${escHtml(doc.email||'')}"></div><div class="form-row"><div class="form-group"><label>来源</label><select id="f-source"><option>网站</option><option>展会</option><option>推荐</option><option>广告</option><option>电话营销</option></select></div><div class="form-group"><label>状态</label><select id="f-status"><option>新线索</option><option>已联系</option><option>已报价</option><option>已转化</option><option>已关闭</option></select></div></div>`;
+  else if (doctype==='Opportunity') fields=`<div class="form-group"><label>商机标题</label><input id="f-title" value="${escHtml(doc.title||'')}"></div><div class="form-row"><div class="form-group"><label>关联客户</label><input id="f-customer_name" value="${escHtml(doc.customer_name||'')}"></div><div class="form-group"><label>预计金额 ¥</label><input id="f-expected_amount" type="number" value="${escHtml(doc.expected_amount||'')}"></div></div><div class="form-row"><div class="form-group"><label>阶段</label><select id="f-stage"><option>lead</option><option>qualified</option><option>proposal</option><option>negotiation</option><option>closed_won</option><option>closed_lost</option></select></div><div class="form-group"><label>成交概率 %</label><input id="f-probability" type="number" value="${escHtml(doc.probability||'10')}"></div></div><div class="form-group"><label>预计成交日期</label><input id="f-expected_close_date" type="date" value="${escHtml(doc.expected_close_date||'')}"></div>`;
+  else if (doctype==='Contact') fields=`<div class="form-group"><label>姓名</label><input id="f-full_name" value="${escHtml(doc.full_name||'')}"></div><div class="form-row"><div class="form-group"><label>职位</label><input id="f-designation" value="${escHtml(doc.designation||'')}"></div><div class="form-group"><label>电话</label><input id="f-phone" value="${escHtml(doc.phone||'')}"></div></div><div class="form-group"><label>邮箱</label><input id="f-email" value="${escHtml(doc.email||'')}"></div><div class="form-group"><label>所属客户</label><input id="f-customer" value="${escHtml(doc.customer||'')}"></div><div class="form-group"><label>状态</label><select id="f-status"><option>活跃</option><option>离职</option><option>退休</option></select></div>`;
+
+  const overlay = document.createElement('div'); overlay.className='modal-overlay'; overlay.id='crm-modal';
+  overlay.innerHTML=`<div class="modal"><div class="modal-header"><h3>${name?'编辑':'新增'}${label}</h3><button onclick="document.getElementById('crm-modal').remove()">✕</button></div><div class="modal-body">${fields}</div><div class="modal-footer"><button class="btn" onclick="document.getElementById('crm-modal').remove()">取消</button><button class="btn btn-primary" onclick="crmSave('${doctype}','${escHtml(name||'')}')">保存</button></div></div>`;
+  document.body.appendChild(overlay);
+  // Fill selects with current values
+  ['customer_group','status','source','stage'].forEach(f=>{
+    const el=document.getElementById('f-'+f); if(el&&doc[f]) el.value=doc[f];
+  });
+  if (doctype==='Customer'&&doc.customer_group) document.getElementById('f-customer_group').value=doc.customer_group;
+  if (doctype==='Lead'&&doc.source) document.getElementById('f-source').value=doc.source;
+  if (doctype==='Opportunity'&&doc.stage) document.getElementById('f-stage').value=doc.stage;
+}
+
+/// 保存
+async function crmSave(doctype, name) {
+  const data = {};
+  const inputs = document.querySelectorAll('#crm-modal input, #crm-modal select');
+  inputs.forEach(el=>{ const key=el.id.replace('f-',''); data[key]=el.value; });
+  // 生成 name（新建时用公司名称，编辑时用已有 name）
+  if (!name) {
+    name = data.company_name || data.full_name || data.title || '未命名';
+  }
+  data.name = name;
+  const apiPath = doctype.toLowerCase();
+  try {
+    const method = name?'PUT':'POST';
+    const url = name?`/api/crm/${apiPath}/${name}`:`/api/crm/${apiPath}`;
+    await api(url,{method,body:JSON.stringify({name:name,data})});
+    document.getElementById('crm-modal').remove();
+    toast(name?'已更新':'已创建','success');
+    renderCRMList(doctype, doctype==='Customer'?'客户':doctype==='Lead'?'潜在客户':doctype==='Opportunity'?'商机':'联系人', doctype==='Customer'?'🏢':doctype==='Lead'?'🎯':doctype==='Opportunity'?'💼':'👤');
+  } catch(e) { toast('保存失败: '+e.message,'error'); }
+}
+
+/// 潜在客户转化
+async function crmConvertLead(name) {
+  if (!confirm('确认将此潜在客户转化为正式客户？')) return;
+  try {
+    // 先获取线索的 expected_value
+    const lead = await api('/api/crm/lead/'+name);
+    const ev = (lead.data||{}).expected_value||0;
+    const r = await api('/api/crm/lead/'+name+'/convert',{method:'POST',body:JSON.stringify({expected_value:ev,expected_close_date:''})});
+    toast(r.message||'转化成功','success');
+    renderCRMList('Lead','潜在客户','🎯');
+  } catch(e) { toast('转化失败: '+e.message,'error'); }
+}
+
+/// 销售管道看板
+async function renderPipeline() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">📊 销售管道</div><div id="pipeline-container">${skeletonRows(1,4)}</div>`;
+  try {
+    const res = await api('/api/crm/pipeline');
+    const pipeline = res.pipeline||[];
+    const stages = [
+      {key:'lead',color:'#6366f1',icon:'🔍'},
+      {key:'qualified',color:'#8b5cf6',icon:'✅'},
+      {key:'proposal',color:'#f59e0b',icon:'📝'},
+      {key:'negotiation',color:'#ef4444',icon:'🤝'},
+      {key:'closed_won',color:'#10b981',icon:'🏆'},
+      {key:'closed_lost',color:'#6b7280',icon:'❌'},
+    ];
+    let html = `<div class="stats-grid">`;
+    stages.forEach(s=>{
+      const p = pipeline.find(x=>x.stage===s.key)||{count:0,amount:0};
+      html+=`<div class="stat-card" style="border-left:3px solid ${s.color}"><div class="stat-label">${s.icon} ${p.label||s.key}</div><div class="stat-value">${p.count}个</div><div class="stat-sub">¥${parseFloat(p.amount||0).toLocaleString()}</div></div>`;
+    });
+    html+=`</div>`;
+
+    // 各阶段详情
+    pipeline.forEach(p=>{
+      if (!p.items||!p.items.length) return;
+      const si = stages.find(s=>s.key===p.stage)||{color:'#6366f1',icon:'📋'};
+      html+=`<h4 style="margin:16px 0 8px;color:${si.color}">${si.icon} ${p.label} (${p.count}个 · ¥${parseFloat(p.amount||0).toLocaleString()})</h4>`;
+      html+='<div class="data-table"><table><thead><tr><th>编号</th><th>标题</th><th>客户</th><th>金额</th><th>概率</th><th>预计成交</th></tr></thead><tbody>';
+      p.items.forEach(o=>{
+        html+=`<tr><td>${escHtml(o.name||'')}</td><td>${escHtml(o.title||'')}</td><td>${escHtml(o.customer_name||'')}</td><td style="text-align:right">¥${parseFloat(o.expected_amount||0).toLocaleString()}</td><td>${o.probability||0}%</td><td>${escHtml(o.expected_close_date||'')}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    });
+
+    if (!pipeline.filter(p=>p.items&&p.items.length).length) html+='<div class="empty">暂无商机数据</div>';
+    document.getElementById('pipeline-container').innerHTML=html;
+  } catch(e) { document.getElementById('pipeline-container').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+/* ══════════════════════════════════════════════════════
+   ASSET REQUISITION — 资产领用
+   ══════════════════════════════════════════════════════ */
+
+async function renderAssetRequisition() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">📋 资产领用管理</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="openRequisitionForm()">+ 新建领用申请</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderAssetRequisition()">🔄 刷新</button></div>
+    <div id="req-list">${skeletonRows(1,4)}</div>`;
+  await loadRequisitions();
+}
+
+async function loadRequisitions() {
+  try {
+    const r = await api('/api/asset/requisition');
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('req-list').innerHTML='<div class="empty">暂无领用记录</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr><th>领用编号</th><th>资产编码</th><th>资产名称</th><th>申请人</th><th>部门</th><th>用途</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      const statusMap = {pending:'⏳待审批',approved:'✅已批准',rejected:'❌已驳回',checked_out:'📤已出库',returned:'📥已归还'};
+      h+=`<tr>
+        <td>${escHtml(d.name||'')}</td>
+        <td>${escHtml(d.asset_code||'')}</td>
+        <td>${escHtml(d.asset_name||'')}</td>
+        <td>${escHtml(d.requester||'')}</td>
+        <td>${escHtml(d.department||'')}</td>
+        <td>${escHtml(d.purpose||'')}</td>
+        <td><span class="badge">${statusMap[d.status]||d.status}</span></td>
+        <td>${escHtml((d.requested_date||d.created_date||'').slice(0,10))}</td>
+        <td>`;
+      if (d.status==='pending') h+=`<button class="btn btn-sm btn-success" onclick="reqAction('${escHtml(d.name)}','approve')">✓</button> <button class="btn btn-sm btn-danger" onclick="reqAction('${escHtml(d.name)}','reject')">✕</button>`;
+      if (d.status==='approved') h+=`<button class="btn btn-sm btn-primary" onclick="reqAction('${escHtml(d.name)}','check-out')">📤出库</button>`;
+      if (d.status==='checked_out') h+=`<button class="btn btn-sm btn-warn" onclick="reqAction('${escHtml(d.name)}','check-in')">📥归还</button>`;
+      h+='</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('req-list').innerHTML=h;
+  } catch(e) { document.getElementById('req-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function openRequisitionForm() {
+  let body = `<div class="form-row"><label>资产编码 <span style="color:#f87171">*</span></label><input id="rf-asset-code" placeholder="扫码或输入资产编码"></div>
+    <div class="form-row"><label>资产名称</label><input id="rf-asset-name" placeholder="自动填充"></div>
+    <div class="form-row"><label>领用用途 <span style="color:#f87171">*</span></label><input id="rf-purpose" placeholder="例：项目开发"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>使用部门</label><input id="rf-dept" placeholder="例：IT部"></div>
+      <div class="form-row"><label>预计归还</label><input id="rf-return" type="date"></div>
+    </div>
+    <div class="form-row"><label>备注</label><textarea id="rf-remarks"></textarea></div>`;
+  openModal('新建领用申请', body, saveRequisition);
+  // 自动查资产
+  document.getElementById('rf-asset-code').addEventListener('blur', async function(){
+    const code = this.value.trim();
+    if (!code) return;
+    try { const r = await api('/api/asset/scan/'+encodeURIComponent(code)); if(r.found) document.getElementById('rf-asset-name').value = r.asset_name||''; }
+    catch(e){}
+  });
+}
+
+async function saveRequisition() {
+  const code = document.getElementById('rf-asset-code').value.trim();
+  if (!code) { toast('请输入资产编码','error'); return; }
+  const data = {
+    asset_code: code,
+    asset_name: document.getElementById('rf-asset-name').value,
+    purpose: document.getElementById('rf-purpose').value,
+    department: document.getElementById('rf-dept').value,
+    expected_return: document.getElementById('rf-return').value,
+    remarks: document.getElementById('rf-remarks').value,
+  };
+  try {
+    await api('/api/asset/requisition',{method:'POST',body:JSON.stringify({name:code,data})});
+    closeModal();
+    toast('领用申请已提交','success');
+    await loadRequisitions();
+  } catch(e) { toast('提交失败: '+e.message,'error'); }
+}
+
+async function reqAction(name, action) {
+  let reason = '';
+  if (action==='reject') { reason = prompt('驳回原因（可选）:')||''; }
+  try {
+    const body = reason?JSON.stringify({reason}):undefined;
+    const r = await api('/api/asset/requisition/'+encodeURIComponent(name)+'/'+action,{method:'POST',body});
+    toast(r.message||'操作成功','success');
+    await loadRequisitions();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════════
+   INVENTORY SCAN — 扫码盘点
+   ══════════════════════════════════════════════════════ */
+
+async function renderAssetScan() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">📱 扫码盘点</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="startInventoryCheck()">+ 新建盘点任务</button><button class="btn btn-info" onclick="switchScanMode('camera')">📷 摄像头扫码</button><button class="btn btn-ghost" onclick="switchScanMode('manual')">⌨️ 手动输入</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderAssetScan()">🔄 刷新</button></div>
+    <div id="scan-main">${skeletonRows(1,4)}</div>`;
+  await loadInventoryChecks();
+}
+
+async function loadInventoryChecks() {
+  try {
+    const r = await api('/api/asset/inventory-check');
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('scan-main').innerHTML='<div class="empty">暂无盘点任务，点击"新建盘点任务"开始</div>'; return; }
+    let h = '<h4>📋 盘点任务列表</h4><div class="data-table"><table><thead><tr><th>盘点编号</th><th>区域</th><th>盘点人</th><th>状态</th><th>开始日期</th><th>已扫</th><th>操作</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      const items = (d.scanned_items||[]);
+      h+=`<tr><td>${escHtml(d.name||'')}</td><td>${escHtml(d.location||'')}</td><td>${escHtml(d.checker||'')}</td><td><span class="badge">${d.status==='in_progress'?'⏳盘点中':'✅已完成'}</span></td><td>${escHtml((d.start_date||'').slice(0,10))}</td><td>${items.length}件</td><td>`;
+      if (d.status==='in_progress') h+=`<button class="btn btn-sm btn-primary" onclick="openScanSession('${escHtml(d.name)}')">📱开始扫码</button> <button class="btn btn-sm btn-warn" onclick="completeCheck('${escHtml(d.name)}')">✅完成</button>`;
+      h+=`<button class="btn btn-sm btn-ghost" onclick="viewCheckReport('${escHtml(d.name)}')">📊报告</button>`;
+      h+='</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('scan-main').innerHTML=h;
+  } catch(e) { document.getElementById('scan-main').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+async function startInventoryCheck() {
+  const loc = prompt('盘点区域（例：3楼、仓库A）:','全部区域')||'全部区域';
+  try {
+    const r = await api('/api/asset/inventory-check',{method:'POST',body:JSON.stringify({data:{location:loc}})});
+    toast('盘点任务已创建: '+r.data.name,'success');
+    await loadInventoryChecks();
+    openScanSession(r.data.name);
+  } catch(e) { toast('创建失败: '+e.message,'error'); }
+}
+
+async function openScanSession(checkId) {
+  const m = document.getElementById('scan-main');
+  m.innerHTML = `<div class="section-header">📱 正在盘点: ${checkId}
+    <button class="btn btn-sm btn-ghost" onclick="loadInventoryChecks()" style="float:right">← 返回列表</button></div>
+    <div class="scan-area">
+      <div class="scan-input-area">
+        <h4>⌨️ 扫码/输入资产编码</h4>
+        <div style="display:flex;gap:8px;margin:12px 0">
+          <input id="scan-input" style="flex:1;padding:12px;font-size:16px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:#e2e8f0" placeholder="输入资产编码或扫描QR码..." autofocus>
+          <button class="btn btn-primary" onclick="doScan('${checkId}')" style="padding:12px 24px">扫码</button>
+        </div>
+        <button class="btn btn-warn" onclick="completeCheck('${checkId}')">✅ 完成盘点</button>
+      </div>
+      <div id="scan-results" style="margin-top:16px"><p style="color:#94a3b8">等待扫码...</p></div>
+    </div>`;
+  document.getElementById('scan-input').addEventListener('keydown', function(e){ if(e.key==='Enter') doScan(checkId); });
+  document.getElementById('scan-input').focus();
+}
+
+async function doScan(checkId) {
+  const code = document.getElementById('scan-input').value.trim();
+  if (!code) return;
+  document.getElementById('scan-input').value = '';
+  try {
+    const r = await api('/api/asset/inventory-check/'+encodeURIComponent(checkId)+'/scan/'+encodeURIComponent(code),{method:'POST'});
+    const d = r.data;
+    const cls = d.match||d.found?'scan-found':'scan-extra';
+    const icon = d.match||d.found?'✅':'⚠️';
+    const div = document.getElementById('scan-results');
+    const entry = document.createElement('div');
+    entry.className = 'scan-entry '+cls;
+    entry.innerHTML = `<span class="scan-icon">${icon}</span> <strong>${escHtml(d.code)}</strong> - ${escHtml(d.name||d.message||'')} <span class="scan-tag">${d.status||''}</span>`;
+    div.prepend(entry);
+    toast(`已扫码: ${d.code} (共${r.total_scanned}件)`,'success');
+    document.getElementById('scan-input').focus();
+  } catch(e) { toast('扫码失败: '+e.message,'error'); document.getElementById('scan-input').focus(); }
+}
+
+async function completeCheck(name) {
+  if (!confirm('确认完成盘点？')) return;
+  try {
+    const r = await api('/api/asset/inventory-check/'+encodeURIComponent(name)+'/complete',{method:'POST'});
+    toast(`盘点完成！共${r.data.total_scanned}件，匹配${r.data.found}件，多余${r.data.extra}件`,'success');
+    await renderAssetScan();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+async function viewCheckReport(name) {
+  try {
+    const r = await api('/api/asset/inventory-check/'+encodeURIComponent(name)+'/report');
+    const items = r.items||[];
+    const s = r.summary||{};
+    let h = `<h4>📊 盘点报告: ${r.name}</h4>
+      <div class="stats-grid" style="margin:12px 0">
+        <div class="stat-card" style="border-left:3px solid #10b981"><div class="stat-label">✅ 匹配</div><div class="stat-value">${s.found||0}</div></div>
+        <div class="stat-card" style="border-left:3px solid #f59e0b"><div class="stat-label">⚠️ 多余</div><div class="stat-value">${s.extra||0}</div></div>
+        <div class="stat-card" style="border-left:3px solid #ef4444"><div class="stat-label">❌ 缺失</div><div class="stat-value">${s.missing||0}</div></div>
+        <div class="stat-card"><div class="stat-label">📦 总计</div><div class="stat-value">${items.length}</div></div>
+      </div>
+      <p>🗓️ ${escHtml(r.start_date||'')} ~ ${escHtml(r.end_date||'')} | 👤 ${escHtml(r.checker||'')} | 📍 ${escHtml(r.location||'')}</p>
+      <div class="data-table"><table><thead><tr><th>资产编码</th><th>名称</th><th>扫码状态</th><th>位置</th></tr></thead><tbody>`;
+    items.forEach(i=>{
+      h+=`<tr><td>${escHtml(i.code||'')}</td><td>${escHtml(i.name||'')}</td><td><span class="badge">${i.status||''}</span></td><td>${escHtml(i.location||i.system_location||'')}</td></tr>`;
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('scan-main').innerHTML = h + '<button class="btn btn-ghost" onclick="loadInventoryChecks()" style="margin-top:12px">← 返回任务列表</button>';
+  } catch(e) { toast('加载报告失败: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════════
+   HR — 人事管理
+   ══════════════════════════════════════════════════════ */
+
+async function renderHREmployees() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">👥 员工管理</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="openEmpForm()">+ 新增员工</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderHREmployees()">🔄 刷新</button></div>
+    <div id="emp-list">${skeletonRows(1,4)}</div>`;
+  try {
+    const r = await api('/api/hr/employee');
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('emp-list').innerHTML='<div class="empty">暂无员工数据，点击"+ 新增员工"添加</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr><th>工号</th><th>姓名</th><th>部门</th><th>职位</th><th>手机</th><th>入职日期</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      h+=`<tr><td>${escHtml(d.name||'')}</td><td>${escHtml(d.employee_name||d.full_name||'')}</td><td>${escHtml(d.department||'')}</td><td>${escHtml(d.position||'')}</td><td>${escHtml(d.phone||'')}</td><td>${escHtml((d.join_date||'').slice(0,10))}</td><td><span class="badge">${d.status==='active'?'在职':'离职'}</span></td><td><button class="btn btn-sm btn-ghost" onclick="openEmpForm('${escHtml(d.name||'')}')">编辑</button></td></tr>`;
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('emp-list').innerHTML=h;
+  } catch(e) { document.getElementById('emp-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function openEmpForm(name) {
+  let body = `<div class="form-row"><label>姓名 <span style="color:#f87171">*</span></label><input id="ef-name"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>部门</label><input id="ef-dept" placeholder="例：技术部"></div>
+      <div class="form-row"><label>职位</label><input id="ef-position" placeholder="例：工程师"></div>
+      <div class="form-row"><label>手机</label><input id="ef-phone"></div>
+      <div class="form-row"><label>邮箱</label><input id="ef-email"></div>
+      <div class="form-row"><label>入职日期</label><input id="ef-join-date" type="date"></div>
+      <div class="form-row"><label>状态</label><select id="ef-status"><option value="active">在职</option><option value="inactive">离职</option></select></div>
+    </div>`;
+  openModal(name?'编辑员工':'新增员工', body, ()=>saveEmp(name));
+  if (name) {
+    (async()=>{try{const r=await api('/api/hr/employee/'+encodeURIComponent(name));const d=r.data||{};
+      document.getElementById('ef-name').value=d.employee_name||d.full_name||'';
+      document.getElementById('ef-dept').value=d.department||'';
+      document.getElementById('ef-position').value=d.position||'';
+      document.getElementById('ef-phone').value=d.phone||'';
+      document.getElementById('ef-email').value=d.email||'';
+      document.getElementById('ef-join-date').value=(d.join_date||'').slice(0,10);
+      document.getElementById('ef-status').value=d.status||'active';
+    } catch(e){}})();
+  }
+}
+
+async function saveEmp(name) {
+  const data = {
+    employee_name: document.getElementById('ef-name').value,
+    department: document.getElementById('ef-dept').value,
+    position: document.getElementById('ef-position').value,
+    phone: document.getElementById('ef-phone').value,
+    email: document.getElementById('ef-email').value,
+    join_date: document.getElementById('ef-join-date').value,
+    status: document.getElementById('ef-status').value,
+  };
+  if (!data.employee_name) { toast('请输入姓名','error'); return; }
+  try {
+    const url = name?`/api/hr/employee/${encodeURIComponent(name)}`:'/api/hr/employee';
+    await api(url,{method:name?'PUT':'POST',body:JSON.stringify({name:name||data.employee_name,data})});
+    closeModal(); toast(name?'已更新':'已入职','success'); renderHREmployees();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/* ═══ 考勤打卡 ═══ */
+
+async function renderHRAttendance() {
+  const m = document.getElementById('main-content');
+  const today = new Date().toISOString().slice(0,10);
+  m.innerHTML = `<div class="section-header">📅 考勤管理</div>
+    <div class="stats-grid" style="margin-bottom:16px" id="att-stats">${skeletonRows(1,3)}</div>
+    <div class="toolbar"><button class="btn btn-success" onclick="checkIn()">✅ 上班打卡</button><button class="btn btn-warn" onclick="checkOut()">🏃 下班签退</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderHRAttendance()">🔄 刷新</button></div>
+    <div id="att-list">${skeletonRows(1,4)}</div>`;
+  loadAttendance();
+}
+
+async function loadAttendance() {
+  try {
+    const [atts, stats] = await Promise.all([api('/api/hr/attendance'), api('/api/hr/stats')]);
+    const docs = atts.data||[];
+    document.getElementById('att-stats').innerHTML = `<div class="stat-card" style="border-left:3px solid #10b981"><div class="stat-label">📊 今日出勤</div><div class="stat-value">${stats.today_attendance}/<small>${stats.total_employees}</small></div><div class="stat-sub">${stats.attendance_rate}</div></div><div class="stat-card" style="border-left:3px solid #f59e0b"><div class="stat-label">🏖️ 待审批请假</div><div class="stat-value">${stats.pending_leaves}</div></div><div class="stat-card" style="border-left:3px solid #6366f1"><div class="stat-label">👥 总员工</div><div class="stat-value">${stats.total_employees}</div></div>`;
+    if (!docs.length) { document.getElementById('att-list').innerHTML='<div class="empty">今日暂无考勤记录</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr><th>记录编号</th><th>员工</th><th>上班打卡</th><th>下班签退</th><th>日期</th><th>状态</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      h+=`<tr><td>${escHtml(d.name||'')}</td><td>${escHtml(d.employee_name||d.employee_id||'')}</td><td>${escHtml(d.check_in||'')}</td><td>${escHtml(d.check_out||'-')}</td><td>${escHtml(d.date||'')}</td><td><span class="badge">${d.status==='completed'?'✅已签退':d.status==='checked_in'?'⏳在岗':'?'}</span></td></tr>`;
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('att-list').innerHTML=h;
+  } catch(e) { document.getElementById('att-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function checkIn() {
+  const name = prompt('输入员工姓名或工号:')||'';
+  if (!name) return;
+  api('/api/hr/attendance',{method:'POST',body:JSON.stringify({data:{employee_id:name,employee_name:name}})})
+    .then(r=>{ toast(`上班打卡成功: ${r.data.check_in}`,'success'); loadAttendance(); })
+    .catch(e=>toast('打卡失败: '+(e.message==='Conflict'?'今日已打卡':e.message),'error'));
+}
+
+async function checkOut() {
+  try {
+    const r = await api('/api/hr/attendance');
+    const today = new Date().toISOString().slice(0,10);
+    const my = (r.data||[]).find(a=>a.date===today&&a.status==='checked_in');
+    if (!my) { toast('今日未打卡','error'); return; }
+    await api('/api/hr/attendance/'+encodeURIComponent(my.name)+'/check-out',{method:'POST'});
+    toast('已签退','success'); loadAttendance();
+  } catch(e) { toast('签退失败: '+e.message,'error'); }
+}
+
+/* ═══ 请假管理 ═══ */
+
+async function renderHRLeave() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">🏖️ 请假管理</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="openLeaveForm()">+ 请假申请</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderHRLeave()">🔄 刷新</button></div>
+    <div id="leave-list">${skeletonRows(1,4)}</div>`;
+  loadLeaves();
+}
+
+async function loadLeaves() {
+  try {
+    const r = await api('/api/hr/leave');
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('leave-list').innerHTML='<div class="empty">暂无请假记录</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr><th>编号</th><th>员工</th><th>类型</th><th>开始</th><th>结束</th><th>天数</th><th>原因</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      const statusMap = {pending:'⏳待审批',approved:'✅已批准',rejected:'❌已驳回'};
+      h+=`<tr><td>${escHtml(d.name||'')}</td><td>${escHtml(d.employee_name||'')}</td><td>${escHtml(d.leave_type||'事假')}</td><td>${escHtml((d.start_date||'').slice(0,10))}</td><td>${escHtml((d.end_date||'').slice(0,10))}</td><td>${d.days||'-'}</td><td>${escHtml((d.reason||'').slice(0,20))}</td><td><span class="badge">${statusMap[d.status]||d.status}</span></td><td>`;
+      if (d.status==='pending') h+=`<button class="btn btn-sm btn-success" onclick="leaveAction('${escHtml(d.name||'')}','approve')">✓</button> <button class="btn btn-sm btn-danger" onclick="leaveAction('${escHtml(d.name||'')}','reject')">✕</button>`;
+      h+='</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('leave-list').innerHTML=h;
+  } catch(e) { document.getElementById('leave-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function openLeaveForm() {
+  let body = `<div class="form-row"><label>员工姓名 <span style="color:#f87171">*</span></label><input id="lf-emp"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>请假类型</label><select id="lf-type"><option>事假</option><option>病假</option><option>年假</option><option>婚假</option><option>产假</option><option>调休</option></select></div>
+      <div class="form-row"><label>天数</label><input id="lf-days" type="number" value="1" min="0.5" step="0.5"></div>
+      <div class="form-row"><label>开始日期</label><input id="lf-start" type="date"></div>
+      <div class="form-row"><label>结束日期</label><input id="lf-end" type="date"></div>
+    </div>
+    <div class="form-row"><label>请假原因</label><textarea id="lf-reason"></textarea></div>`;
+  openModal('请假申请', body, async ()=>{
+    const data = {
+      employee_name: document.getElementById('lf-emp').value,
+      leave_type: document.getElementById('lf-type').value,
+      days: document.getElementById('lf-days').value,
+      start_date: document.getElementById('lf-start').value,
+      end_date: document.getElementById('lf-end').value,
+      reason: document.getElementById('lf-reason').value,
+    };
+    if (!data.employee_name) { toast('请输入员工姓名','error'); return; }
+    try {
+      await api('/api/hr/leave',{method:'POST',body:JSON.stringify({data})});
+      closeModal(); toast('请假申请已提交','success'); loadLeaves();
+    } catch(e) { toast('提交失败: '+e.message,'error'); }
+  });
+}
+
+async function leaveAction(name, action) {
+  try {
+    const r = await api('/api/hr/leave/'+encodeURIComponent(name)+'/'+action,{method:'POST'});
+    toast(r.message||'操作成功','success'); loadLeaves();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════════
+   PROCUREMENT — 采购供应链
+   ══════════════════════════════════════════════════════ */
+
+/// 通用采购列表渲染
+async function renderProcurementList(doctype, label, icon) {
+  const m = document.getElementById('main-content');
+  const apiPath = doctype === 'Supplier' ? 'supplier' : doctype === 'PurchaseRequisition' ? 'pr' : 'receipt';
+  m.innerHTML = `<div class="section-header">${icon} ${label}</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="openProcForm('${doctype}')">+ 新增</button>
+      <button class="btn btn-info" onclick="showCSVImport('${doctype}','/api/procurement/${doctype==='Supplier'?'supplier':'pr'}','renderProcurementList')">📥 导入CSV</button>
+      <span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderProcurementList('${doctype}','${label}','${icon}')">🔄 刷新</button></div>
+    <div id="proc-list">${skeletonRows(1,4)}</div>`;
+  try {
+    const r = await api('/api/procurement/'+apiPath);
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('proc-list').innerHTML='<div class="empty">暂无数据</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr>';
+    if (doctype==='Supplier') h+='<th>名称</th><th>联系人</th><th>电话</th><th>邮箱</th><th>类别</th><th>状态</th><th>操作</th>';
+    else if (doctype==='PurchaseRequisition') h+='<th>编号</th><th>申请人</th><th>部门</th><th>日期</th><th>金额</th><th>状态</th><th>操作</th>';
+    else h+='<th>编号</th><th>供应商</th><th>采购单</th><th>日期</th><th>物料数</th><th>状态</th><th>操作</th>';
+    h+='</tr></thead><tbody>';
+    docs.forEach(d=>{
+      h+='<tr>';
+      h+=`<td>${escHtml(d.name||'')}</td>`;
+      if (doctype==='Supplier') h+=`<td>${escHtml(d.contact_person||'')}</td><td>${escHtml(d.phone||'')}</td><td>${escHtml(d.email||'')}</td><td>${escHtml(d.category||'')}</td><td><span class="badge">${d.status==='active'?'✅活跃':'❌停用'}</span></td><td><button class="btn btn-sm btn-ghost" onclick="openProcForm('Supplier','${escHtml(d.name||'')}')">编辑</button></td>`;
+      else if (doctype==='PurchaseRequisition') {
+        const total = (d.items||[]).reduce((s,i)=>{const q=parseFloat(i.quantity||0),r=parseFloat(i.rate||0);return s+q*r;},0);
+        h+=`<td>${escHtml(d.requester||d.requested_by||'')}</td><td>${escHtml(d.department||'')}</td><td>${escHtml((d.requested_date||'').slice(0,10))}</td><td>¥${total.toLocaleString()}</td><td><span class="badge">${d.status||''}</span></td><td>`;
+        if (d.status==='pending') h+=`<button class="btn btn-sm btn-success" onclick="procAction('pr','${escHtml(d.name||'')}','approve')">✓</button> <button class="btn btn-sm btn-danger" onclick="procAction('pr','${escHtml(d.name||'')}','reject')">✕</button>`;
+        h+='</td>';
+      } else {
+        const items = d.items||[];
+        h+=`<td>${escHtml(d.supplier_name||d.supplier||'')}</td><td>${escHtml(d.po_reference||'')}</td><td>${escHtml((d.receipt_date||d.order_date||'').slice(0,10))}</td><td>${items.length}项</td><td><span class="badge">${d.status||''}</span></td><td>`;
+      }
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('proc-list').innerHTML=h;
+  } catch(e) { document.getElementById('proc-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function openProcForm(doctype, name) {
+  const label = doctype==='Supplier'?'供应商':'采购申请';
+  let body = '';
+  if (doctype==='Supplier') body = `<div class="form-row"><label>供应商名称 <span style="color:#f87171">*</span></label><input id="pf-name"></div>
+    <div class="form-grid"><div class="form-row"><label>联系人</label><input id="pf-contact"></div><div class="form-row"><label>电话</label><input id="pf-phone"></div></div>
+    <div class="form-row"><label>邮箱</label><input id="pf-email"></div>
+    <div class="form-grid"><div class="form-row"><label>类别</label><select id="pf-category"><option>原材料</option><option>设备</option><option>服务</option><option>其他</option></select></div><div class="form-row"><label>地址</label><input id="pf-address"></div></div>`;
+  else body = `<div class="form-row"><label>申请部门</label><input id="pf-dept" placeholder="例：技术部"></div>
+    <div class="form-row"><label>申请人</label><input id="pf-requester" value="admin"></div>
+    <div class="form-row"><label>采购原因</label><textarea id="pf-purpose"></textarea></div>
+    <hr><h4>📦 采购明细</h4>
+    <div id="pf-items"><div class="form-row" style="display:flex;gap:8px;align-items:end"><input placeholder="物料名称" id="pfi-name" style="flex:2"><input placeholder="数量" id="pfi-qty" type="number" style="flex:1"><input placeholder="单价" id="pfi-rate" type="number" step="0.01" style="flex:1"><button class="btn btn-sm btn-primary" onclick="addPRItem()">+添加</button></div></div>
+    <div id="pf-items-list"></div>`;
+  openModal(name?'编辑'+label:'新增'+label, body, ()=>saveProc(doctype, name));
+  window._prItems = name ? [] : [];
+  if (name && doctype!=='Supplier') {
+    (async()=>{try{const r=await api('/api/procurement/'+({PurchaseRequisition:'pr'}[doctype]||'')+'/'+encodeURIComponent(name));const d=r.data||{};
+      if (doctype==='PurchaseRequisition') { document.getElementById('pf-dept').value=d.department||''; document.getElementById('pf-requester').value=d.requester||''; document.getElementById('pf-purpose').value=d.purpose||''; window._prItems=(d.items||[]); renderPRItems(); }
+    } catch(e){}})();
+  }
+  if (name && doctype==='Supplier') {
+    (async()=>{try{const r=await api('/api/procurement/supplier/'+encodeURIComponent(name));const d=r.data||{};
+      document.getElementById('pf-name').value=d.name||''; document.getElementById('pf-contact').value=d.contact_person||''; document.getElementById('pf-phone').value=d.phone||''; document.getElementById('pf-email').value=d.email||''; document.getElementById('pf-category').value=d.category||''; document.getElementById('pf-address').value=d.address||'';
+    } catch(e){}})();
+  }
+}
+
+function addPRItem() {
+  const name = document.getElementById('pfi-name').value.trim();
+  const qty = parseFloat(document.getElementById('pfi-qty').value)||0;
+  const rate = parseFloat(document.getElementById('pfi-rate').value)||0;
+  if (!name||!qty) return;
+  window._prItems = window._prItems||[];
+  window._prItems.push({item_name:name,quantity:qty,rate:rate,amount:qty*rate});
+  document.getElementById('pfi-name').value=''; document.getElementById('pfi-qty').value=''; document.getElementById('pfi-rate').value='';
+  renderPRItems();
+}
+
+function renderPRItems() {
+  const items = window._prItems||[];
+  document.getElementById('pf-items-list').innerHTML = items.map((i,idx)=>`<div class="scan-entry" style="background:#1e293b;margin:4px 0">${i.item_name} ×${i.quantity} @¥${(i.rate||0).toLocaleString()} = ¥${(i.amount||0).toLocaleString()} <button class="btn btn-sm btn-danger" onclick="window._prItems.splice(${idx},1);renderPRItems()" style="float:right">✕</button></div>`).join('');
+}
+
+async function saveProc(doctype, name) {
+  const apiPath = doctype==='Supplier'?'supplier':doctype==='PurchaseRequisition'?'pr':'receipt';
+  let data = {};
+  if (doctype==='Supplier') {
+    data = {
+      name: document.getElementById('pf-name').value||name,
+      supplier_name: document.getElementById('pf-name').value||name,
+      contact_person: document.getElementById('pf-contact').value,
+      phone: document.getElementById('pf-phone').value, email: document.getElementById('pf-email').value,
+      category: document.getElementById('pf-category').value, address: document.getElementById('pf-address').value,
+    };
+    if (!data.name) { toast('请输入供应商名称','error'); return; }
+  } else {
+    data = {
+      department: document.getElementById('pf-dept').value,
+      requester: document.getElementById('pf-requester').value,
+      purpose: document.getElementById('pf-purpose').value,
+      items: window._prItems||[],
+    };
+  }
+  try {
+    const method = name?'PUT':'POST';
+    const url = name?`/api/procurement/${apiPath}/${encodeURIComponent(name)}`:`/api/procurement/${apiPath}`;
+    await api(url,{method,body:JSON.stringify({name:data.name||name,data})});
+    closeModal(); toast(name?'已更新':'已创建','success');
+    const labels = {Supplier:'供应商',PurchaseRequisition:'采购申请',GoodsReceipt:'收货单'};
+    const icons = {Supplier:'🏭',PurchaseRequisition:'📋',GoodsReceipt:'🚚'};
+    renderProcurementList(doctype, labels[doctype]||'', icons[doctype]||'');
+  } catch(e) { toast('保存失败: '+e.message,'error'); }
+}
+
+async function procAction(type, name, action) {
+  try {
+    const r = await api('/api/procurement/'+type+'/'+encodeURIComponent(name)+'/'+action,{method:'POST'});
+    toast(r.message||'操作成功','success');
+    const labels = {Supplier:'供应商',PurchaseRequisition:'采购申请'};
+    renderProcurementList(type==='pr'?'PurchaseRequisition':'Supplier', labels[type==='pr'?'PurchaseRequisition':'Supplier']||'', type==='pr'?'📋':'🏭');
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/// 采购订单页面（含下单/收货操作）
+async function renderPO() {
+  const m = document.getElementById('main-content');
+  m.innerHTML = `<div class="section-header">📦 采购订单</div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="openPOForm()">+ 新建订单</button><span class="toolbar-spacer"></span><button class="btn btn-ghost" onclick="renderPO()">🔄 刷新</button></div>
+    <div id="po-list">${skeletonRows(1,4)}</div>`;
+  try {
+    const r = await api('/api/procurement/po');
+    const docs = r.data||[];
+    if (!docs.length) { document.getElementById('po-list').innerHTML='<div class="empty">暂无采购订单</div>'; return; }
+    let h = '<div class="data-table"><table><thead><tr><th>订单编号</th><th>供应商</th><th>日期</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    docs.forEach(d=>{
+      const total = (d.items||[]).reduce((s,i)=>{const q=parseFloat(i.quantity||0),r=parseFloat(i.rate||0);return s+q*r;},0);
+      const statusMap = {draft:'📝草稿',ordered:'📤已下单',received:'📥已收货'};
+      h+=`<tr><td>${escHtml(d.name||'')}</td><td>${escHtml(d.supplier_name||d.supplier||'')}</td><td>${escHtml((d.order_date||'').slice(0,10))}</td><td style="text-align:right">¥${total.toLocaleString()}</td><td><span class="badge">${statusMap[d.status]||d.status}</span></td><td>`;
+      if (d.status==='draft') h+=`<button class="btn btn-sm btn-primary" onclick="poAction('${escHtml(d.name||'')}','order')">📤下单</button>`;
+      if (d.status==='ordered') h+=`<button class="btn btn-sm btn-success" onclick="poAction('${escHtml(d.name||'')}','receive')">📥收货</button>`;
+      h+='</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('po-list').innerHTML=h;
+  } catch(e) { document.getElementById('po-list').innerHTML=`<div class="error">加载失败: ${e.message}</div>`; }
+}
+
+function openPOForm() {
+  let body = `<div class="form-row"><label>供应商</label><input id="pof-supplier"></div>
+    <hr><h4>📦 采购明细</h4>
+    <div id="pof-items"><div style="display:flex;gap:8px"><input placeholder="物料名称" id="pofi-name" style="flex:2"><input placeholder="数量" id="pofi-qty" type="number" style="flex:1"><input placeholder="单价" id="pofi-rate" type="number" step="0.01" style="flex:1"><button class="btn btn-sm btn-primary" onclick="addPOItem()">+添加</button></div></div>
+    <div id="pof-items-list"></div>`;
+  openModal('新建采购订单', body, savePO);
+  window._poItems = [];
+}
+
+function addPOItem() {
+  const name = document.getElementById('pofi-name').value.trim();
+  const qty = parseFloat(document.getElementById('pofi-qty').value)||0;
+  const rate = parseFloat(document.getElementById('pofi-rate').value)||0;
+  if (!name||!qty) return;
+  window._poItems = window._poItems||[];
+  window._poItems.push({item_name:name,quantity:qty,rate:rate,amount:qty*rate});
+  document.getElementById('pofi-name').value=''; document.getElementById('pofi-qty').value=''; document.getElementById('pofi-rate').value='';
+  document.getElementById('pof-items-list').innerHTML = window._poItems.map((i,idx)=>`<div class="scan-entry" style="background:#1e293b;margin:4px 0">${i.item_name} ×${i.quantity} @¥${(i.rate||0).toLocaleString()} = ¥${(i.amount||0).toLocaleString()} <button class="btn btn-sm btn-danger" onclick="window._poItems.splice(${idx},1);renderPOItems()" style="float:right">✕</button></div>`).join('');
+}
+
+async function savePO() {
+  const data = {
+    supplier_name: document.getElementById('pof-supplier').value,
+    supplier: document.getElementById('pof-supplier').value,
+    items: window._poItems||[],
+  };
+  try {
+    await api('/api/procurement/po',{method:'POST',body:JSON.stringify({data})});
+    closeModal(); toast('采购订单已创建','success'); renderPO();
+  } catch(e) { toast('保存失败: '+e.message,'error'); }
+}
+
+async function poAction(name, action) {
+  try {
+    const r = await api('/api/procurement/po/'+encodeURIComponent(name)+'/'+action,{method:'POST'});
+    toast(r.message||'操作成功','success'); renderPO();
+  } catch(e) { toast('操作失败: '+e.message,'error'); }
+}
+
+/* ══════════════════════════════════════════════════════
+   UTILITY
+   ══════════════════════════════════════════════════════ */
+function escHtml(s) {
+  if (typeof s!=='string') return String(s||'');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* === CSV Import === */
+function showCSVImport(doctype, apiPath, refreshFn, template) {
+  const body = `<div style="margin-bottom:12px"><label style="color:#94a3b8;font-size:12px">📂 选择 CSV 文件（UTF-8 编码，第一行为列名）</label>
+    <input type="file" id="csv-file" accept=".csv" style="width:100%;padding:8px;background:#0f172a;border:1px dashed #475569;color:#e2e8f0;border-radius:6px;margin-top:4px" onchange="parseCSVPreview('${doctype}','${apiPath}','${refreshFn}')">
+    ${template?`<div style="margin-top:8px;font-size:11px;color:#64748b">📋 模板列：${template}</div>`:''}
+    </div>
+    <div id="csv-preview" style="max-height:300px;overflow-y:auto"></div>
+    <div id="csv-actions" style="display:none;margin-top:12px;text-align:right">
+      <span id="csv-count" style="color:#94a3b8;font-size:13px"></span>
+      <button class="btn btn-primary" id="csv-import-btn" onclick="doCSVImport('${doctype}','${apiPath}','${refreshFn}')">📥 导入</button>
+    </div>`;
+  openModal('📥 CSV批量导入 '+doctype, body, null);
+  document.getElementById('modal-save-btn').style.display='none';
+  window._csvData = [];
+}
+function parseCSV(src) {
+  const rows = [];
+  let row=[], cell='', inQ=false;
+  for (let i=0;i<src.length;i++) {
+    const c=src[i];
+    if (inQ) { if (c==='"') inQ=false; else cell+=c; }
+    else if (c==='"') inQ=true;
+    else if (c===',') { row.push(cell.trim()); cell=''; }
+    else if (c==='\n'||c==='\r') { if (c==='\r'&&src[i+1]==='\n') i++; if (cell||row.length) { row.push(cell.trim()); if (row.some(v=>v)) rows.push(row); row=[]; cell=''; } }
+    else cell+=c;
+  }
+  if (cell||row.length) { row.push(cell.trim()); if (row.some(v=>v)) rows.push(row); }
+  return rows;
+}
+function parseCSVPreview(doctype, apiPath, refreshFn) {
+  const file = document.getElementById('csv-file').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const rows = parseCSV(e.target.result);
+    if (rows.length<2) { document.getElementById('csv-preview').innerHTML='<div style="color:#fca5a5">❌ CSV 至少需要表头+1行数据</div>'; return; }
+    const headers = rows[0];
+    window._csvData = rows.slice(1).map(r=>{ const obj={}; headers.forEach((h,i)=>obj[h]=r[i]||''); return obj; });
+    let h='<table class="child-table"><thead><tr>'+headers.map(h=>'<th>'+escHtml(h)+'</th>').join('')+'</tr></thead><tbody>';
+    window._csvData.slice(0,20).forEach(r=>{ h+='<tr>'+headers.map(h=>'<td>'+escHtml(r[h]||'')+'</td>').join('')+'</tr>'; });
+    h+='</tbody></table>';
+    if (window._csvData.length>20) h+='<div style="color:#64748b;font-size:11px;padding:4px">... 还有 '+(window._csvData.length-20)+' 行</div>';
+    document.getElementById('csv-preview').innerHTML=h;
+    document.getElementById('csv-actions').style.display='block';
+    document.getElementById('csv-count').textContent='共 '+window._csvData.length+' 条记录';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+async function doCSVImport(doctype, apiPath, refreshFn) {
+  const data = window._csvData||[];
+  if (!data.length) return toast('无数据可导入','warn');
+  const btn = document.getElementById('csv-import-btn');
+  btn.disabled=true; btn.textContent='⏳ 导入中...';
+  let ok=0, fail=0;
+  for (const row of data) {
+    try {
+      await api(apiPath,{method:'POST',body:JSON.stringify({data:row})});
+      ok++;
+    } catch(e) { fail++; }
+  }
+  btn.disabled=false; btn.textContent='📥 导入';
+  closeModal();
+  toast('导入完成: '+ok+' 成功'+(fail>0?', '+fail+' 失败':'')+' ✅',fail>0?'warn':'success');
+  setTimeout(()=>{
+    if (typeof _currentPage!=='undefined' && _currentPage) switchPage(_currentPage);
+  }, 300);
+}
+
+/* === Global Search === */
+let _searchTimer = null;
+const SEARCH_TARGETS = [
+  {doctype:'Customer',label:'客户',icon:'🏢',nav:'crm-customers',match:(d)=>d.customer_name||d.name},
+  {doctype:'Item',label:'物料',icon:'📦',nav:'inventory',match:(d)=>d.item_name||d.name},
+  {doctype:'Employee',label:'员工',icon:'👤',nav:'hr-employees',match:(d)=>d.employee_name||d.name},
+  {doctype:'Supplier',label:'供应商',icon:'🏭',nav:'proc-suppliers',match:(d)=>d.supplier_name||d.name},
+  {doctype:'Sales Invoice',label:'销售发票',icon:'📄',nav:'sales',match:(d)=>d.customer_name||d.name},
+  {doctype:'Purchase Order',label:'采购订单',icon:'📦',nav:'proc-po',match:(d)=>d.supplier_name||d.name},
+  {doctype:'Work Order',label:'生产工单',icon:'🏭',nav:'workorder',match:(d)=>d.item_name||d.bom_name||d.name},
+  {doctype:'Contact',label:'联系人',icon:'👤',nav:'crm-contacts',match:(d)=>d.full_name||d.first_name||d.name},
+];
+
+async function globalSearch() {
+  const q = document.getElementById('global-search').value.trim();
+  const dd = document.getElementById('search-results');
+  if (q.length < 2) { dd.classList.remove('show'); return; }
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(async ()=>{
+    dd.innerHTML = '<div class="search-empty">🔍 搜索中...</div>';
+    dd.classList.add('show');
+    let results = [];
+    const token = localStorage.getItem('token');
+    const headers = {'Content-Type':'application/json'};
+    if (token) headers['Authorization'] = 'Bearer '+token;
+    try {
+      const promises = SEARCH_TARGETS.map(async t => {
+        try {
+          const url = API+'/api/resource/'+encodeURIComponent(t.doctype)+'?limit=5&search='+encodeURIComponent(q);
+          const res = await fetch(url,{headers});
+          if (!res.ok) return [];
+          const j = await res.json();
+          return (j.data||[]).map(d=>({...t, name:d.name, display:t.match(d)||d.name, doc:d}));
+        } catch(e) { return []; }
+      });
+      const all = await Promise.all(promises);
+      results = all.flat().slice(0,15);
+    } catch(e) {}
+    if (results.length === 0) {
+      dd.innerHTML = '<div class="search-empty">未找到匹配结果</div>';
+    } else {
+      dd.innerHTML = results.map(r=>`<div class="search-result-item" onclick="switchPage('${r.nav}');document.getElementById('search-results').classList.remove('show');document.getElementById('global-search').value=''"><div class="sricon">${r.icon}</div><div class="srinfo"><div class="srname">${escHtml(r.display||r.name)}</div><div class="srtype">${r.label} · ${escHtml(r.name)}</div></div></div>`).join('');
+    }
+  }, 300);
+}
+document.addEventListener('click',e=>{
+  const dd = document.getElementById('search-results');
+  const inp = document.getElementById('global-search');
+  if (dd && inp && !inp.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('show');
+});
+</script>
+</body>
+</html>
