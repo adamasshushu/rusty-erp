@@ -409,7 +409,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 /* ═══════════════════════════════════════════
    RustyERP Frontend v0.7.0 — Complete
    ═══════════════════════════════════════════ */
-const API = '';
+const API = window.location.protocol+'//'+window.location.hostname+':8008';
 const PAGE_SIZE = 15;
 let charts = { bar: null, doughnut: null };
 let _confirmResolve = null;
